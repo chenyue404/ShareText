@@ -3,26 +3,41 @@ package com.cy.shareText
 import android.content.Intent
 import android.os.Build
 import android.os.Bundle
+import android.text.TextUtils
 import android.view.Menu
 import android.view.MenuInflater
 import android.view.MenuItem
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import com.blankj.utilcode.util.ServiceUtils
+import kotlinx.android.synthetic.main.activity_main.*
 import org.greenrobot.eventbus.EventBus
 import org.greenrobot.eventbus.Subscribe
 
 class MainActivity : AppCompatActivity() {
 
-    lateinit var runMenu: MenuItem
-    var serverStatus = WebServerStatusEvent.STATUS_STOP
+    private lateinit var runMenu: MenuItem
+    private var serverStatus = WebServerStatusEvent.STATUS_STOP
     private val intent = lazy {
         Intent(this, WebServer::class.java)
     }
+    private val dataList = arrayListOf<String>()
+    private lateinit var adapter: ListAdapter
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+        initList()
+
+        bt_send.setOnClickListener {
+            val text = et_input.text.toString().trim()
+            if (TextUtils.isEmpty(text)) {
+                return@setOnClickListener
+            }
+            et_input.text?.clear()
+            dataList.add(text)
+            adapter.notifyDataSetChanged()
+        }
     }
 
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
@@ -109,5 +124,12 @@ class MainActivity : AppCompatActivity() {
 
             }
         }
+    }
+
+    private fun initList() {
+        adapter = ListAdapter(dataList)
+        rv_list.adapter = adapter
+        val dimen = resources.getDimension(R.dimen.list_space).toInt()
+        rv_list.addItemDecoration(SpaceItemDecoration(dimen, 0, dimen, dimen))
     }
 }

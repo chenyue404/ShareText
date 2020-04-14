@@ -10,12 +10,14 @@
         android:id="@+id/rv_list"
         android:layout_width="match_parent"
         android:layout_height="0dp"
+        android:paddingVertical="@dimen/list_space"
         app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
-        app:layout_constraintBottom_toTopOf="@id/rt_input"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintBottom_toTopOf="@id/et_input"
+        app:layout_constraintTop_toTopOf="parent"
+        tools:listitem="@layout/item_list" />
 
     <androidx.appcompat.widget.AppCompatEditText
-        android:id="@+id/rt_input"
+        android:id="@+id/et_input"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         app:layout_constraintBottom_toBottomOf="parent"
@@ -29,5 +31,5 @@
         android:text="@string/send"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toEndOf="@id/rt_input" />
+        app:layout_constraintStart_toEndOf="@id/et_input" />
 </androidx.constraintlayout.widget.ConstraintLayout>
