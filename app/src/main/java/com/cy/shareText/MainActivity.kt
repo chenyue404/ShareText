@@ -161,7 +161,10 @@ class MainActivity : AppCompatActivity() {
             return
         }
         rv_list.post {
-            dataList.add(text)
+            dataList.clear()
+            dataList.addAll(
+                CacheMemoryUtils.getInstance().get<ArrayList<String>>(KEY_CACHE)
+            )
             adapter.notifyItemInserted(dataList.size - 1)
             rv_list.scrollToPosition(adapter.getItemCount() - 1)
         }
