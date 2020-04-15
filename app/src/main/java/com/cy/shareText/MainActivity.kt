@@ -9,12 +9,17 @@ import android.view.MenuInflater
 import android.view.MenuItem
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
+import com.blankj.utilcode.util.CacheMemoryUtils
 import com.blankj.utilcode.util.ServiceUtils
 import kotlinx.android.synthetic.main.activity_main.*
 import org.greenrobot.eventbus.EventBus
 import org.greenrobot.eventbus.Subscribe
 
 class MainActivity : AppCompatActivity() {
+
+    companion object {
+        val KEY_CACHE = "list"
+    }
 
     private lateinit var runMenu: MenuItem
     private var serverStatus = WebServerStatusEvent.STATUS_STOP
@@ -26,6 +31,7 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        EventBus.getDefault().register(this)
         setContentView(R.layout.activity_main)
         initList()
 
@@ -34,10 +40,33 @@ class MainActivity : AppCompatActivity() {
             if (TextUtils.isEmpty(text)) {
                 return@setOnClickListener
             }
-            et_input.text?.clear()
-            dataList.add(text)
-            adapter.notifyDataSetChanged()
+            addText(text)
         }
+        rv_list.post { startServer() }
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        EventBus.getDefault().unregister(this)
+    }
+
+    override fun onResume() {
+        super.onResume()
+        val list = CacheMemoryUtils.getInstance().get<ArrayList<String>>(KEY_CACHE)
+        if (list != null && !list.equals(dataList)) {
+            dataList.clear()
+            dataList.addAll(list)
+            adapter.notifyDataSetChanged()
+            rv_list.scrollToPosition(dataList.size - 1)
+        }
+    }
+
+    private fun addText(text: String) {
+        et_input.text?.clear()
+        dataList.add(text)
+        adapter.notifyItemChanged(dataList.size - 1)
+        rv_list.scrollToPosition(dataList.size - 1)
+        CacheMemoryUtils.getInstance().put(KEY_CACHE, dataList)
     }
 
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
@@ -91,16 +120,6 @@ class MainActivity : AppCompatActivity() {
         stopService(intent.value)
     }
 
-    override fun onStart() {
-        EventBus.getDefault().register(this)
-        super.onStart()
-    }
-
-    override fun onStop() {
-        EventBus.getDefault().unregister(this)
-        super.onStop()
-    }
-
     @Subscribe
     public fun onWebServerStatusEvent(event: WebServerStatusEvent) {
         val status = event.status
@@ -131,5 +150,18 @@ class MainActivity : AppCompatActivity() {
         rv_list.adapter = adapter
         val dimen = resources.getDimension(R.dimen.list_space).toInt()
         rv_list.addItemDecoration(SpaceItemDecoration(dimen, 0, dimen, dimen))
+    }
+
+    @Subscribe
+    public fun onNewTetEvent(event: NewTextEvent) {
+        val text = event.text
+        if (TextUtils.isEmpty(text)) {
+            return
+        }
+        rv_list.post {
+            dataList.add(text)
+            adapter.notifyItemInserted(dataList.size - 1)
+            rv_list.scrollToPosition(adapter.getItemCount() - 1)
+        }
     }
 }

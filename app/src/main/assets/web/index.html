@@ -1,10 +1,64 @@
 <!DOCTYPE html>
 <html>
-	<head>
-		<meta charset="utf-8">
-		<title></title>
+<head>
+    <meta charset="utf-8"/>
+    <title></title>
+    <script src="js/vue.js" type="text/javascript" charset="utf-8"/>
+    </script>
 	</head>
 	<body>
-		这是一个测试网页
-	</body>
+		<div id="app-list" style="white-space:pre">
+			<div style="position: fixed;">
+				<button v-on:click="getList">get list</button>
+				<textarea type="text" id="input_text" ref="input_text"></textarea>
+				<input v-on:click="addText" type="submit" />
+			</div>
+			<ul style="margin-top: 50px;">
+				<li v-for="(text,index) in texts">
+					<a>{{ text }}</a>
+				</li>
+			</ul>
+		</div>
+		<script>
+			let baseurl = "http://" + window.location.host
+			// baseurl = 'http://192.168.31.145:8080'
+			console.log(baseurl + "/list")
+			var data = {
+				texts: []
+			}
+			var app = new Vue({
+				el: '#app-list',
+				data: data,
+				methods: {
+					getList: function() {
+						let getListHttp = new XMLHttpRequest()
+						getListHttp.onreadystatechange = function() {
+							if (getListHttp.readyState == 4 && getListHttp.status == 200) {
+								console.log(getListHttp.responseText)
+								app.$data.texts = JSON.parse(getListHttp.responseText)
+							}
+						}
+						let listUrl = baseurl + "/list"
+						console.log(listUrl)
+						getListHttp.open("GET", listUrl, true)
+						getListHttp.send()
+					},
+					addText: function() {
+						console.log(this.$refs.input_text.value)
+
+						let addTextHttp = new XMLHttpRequest()
+						addTextHttp.onreadystatechange = function() {
+							if (addTextHttp.readyState == 4 && addTextHttp.status == 200) {
+								app.$refs.input_text.value = ""
+								app.$options.methods.getList()
+							}
+						}
+						addTextHttp.open("POST", baseurl + "/addText", true)
+						addTextHttp.setRequestHeader("Content-type", "application/x-www-form-urlencoded")
+						addTextHttp.send("text=" + this.$refs.input_text.value)
+					}
+				}
+			})
+		</script>
+    </body>
 </html>

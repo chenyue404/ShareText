@@ -9,10 +9,20 @@
 
     <TextView
         android:id="@+id/tv_01"
-        android:layout_width="match_parent"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:textColor="@android:color/white"
         android:textIsSelectable="true"
+        app:layout_constraintEnd_toStartOf="@id/iv_copy"
+        app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         tools:text="12312312312" />
+
+    <ImageView
+        android:id="@+id/iv_copy"
+        android:layout_width="30dp"
+        android:layout_height="30dp"
+        android:src="?attr/actionModeCopyDrawable"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
 </androidx.constraintlayout.widget.ConstraintLayout>
