@@ -43,6 +43,8 @@ class MainActivity : AppCompatActivity() {
             addText(text)
         }
         rv_list.post { startServer() }
+
+        getShareText();
     }
 
     override fun onDestroy() {
@@ -162,6 +164,18 @@ class MainActivity : AppCompatActivity() {
             dataList.add(text)
             adapter.notifyItemInserted(dataList.size - 1)
             rv_list.scrollToPosition(adapter.getItemCount() - 1)
+        }
+    }
+
+    private fun getShareText() {
+        val intent = getIntent()
+        val action = intent.action
+        val type = intent.type
+        if (Intent.ACTION_SEND.equals(action) && type != null) {
+            if ("text/plain".equals(type)) {
+                val share = intent.getStringExtra(Intent.EXTRA_TEXT)
+                addText(share)
+            }
         }
     }
 }
