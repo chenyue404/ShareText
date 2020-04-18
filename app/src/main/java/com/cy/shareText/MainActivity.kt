@@ -1,6 +1,7 @@
 package com.cy.shareText
 
 import android.content.Intent
+import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.text.TextUtils
@@ -11,6 +12,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import com.blankj.utilcode.util.CacheMemoryUtils
 import com.blankj.utilcode.util.ServiceUtils
+import com.blankj.utilcode.util.ToastUtils
 import kotlinx.android.synthetic.main.activity_main.*
 import org.greenrobot.eventbus.EventBus
 import org.greenrobot.eventbus.Subscribe
@@ -76,21 +78,10 @@ class MainActivity : AppCompatActivity() {
         inflater.inflate(R.menu.menu_main, menu)
         runMenu = menu!!.findItem(R.id.m_start)
 
-        val oldStatus = serverStatus
-        val drawableId: Int
         if (ServiceUtils.isServiceRunning(WebServer::class.java)) {
-            drawableId = android.R.drawable.ic_media_pause
-            serverStatus = WebServerStatusEvent.STATUS_START
+            changeStatus(WebServerStatusEvent.STATUS_START)
         } else {
-            drawableId = android.R.drawable.ic_media_play
-            serverStatus = WebServerStatusEvent.STATUS_STOP
-        }
-        if (oldStatus != serverStatus) {
-            runMenu.icon =
-                ContextCompat.getDrawable(
-                    this@MainActivity,
-                    drawableId
-                )
+            changeStatus(WebServerStatusEvent.STATUS_STOP)
         }
         return true
     }
@@ -103,6 +94,14 @@ class MainActivity : AppCompatActivity() {
                     startServer()
                 } else {
                     stopServer()
+                }
+                true
+            }
+            R.id.m_about -> {
+                val webPage: Uri = Uri.parse("https://github.com/chenyue404/ShareText")
+                val intent = Intent(Intent.ACTION_VIEW, webPage)
+                if (intent.resolveActivity(packageManager) != null) {
+                    startActivity(intent)
                 }
                 true
             }
@@ -125,6 +124,13 @@ class MainActivity : AppCompatActivity() {
     @Subscribe
     public fun onWebServerStatusEvent(event: WebServerStatusEvent) {
         val status = event.status
+        changeStatus(status)
+        if (status == WebServerStatusEvent.STATUS_ERROR) {
+            ToastUtils.showShort(event.errorMsg)
+        }
+    }
+
+    private fun changeStatus(status: Int) {
         serverStatus = status
         when (status) {
             WebServerStatusEvent.STATUS_START -> {
@@ -133,6 +139,7 @@ class MainActivity : AppCompatActivity() {
                         this@MainActivity,
                         android.R.drawable.ic_media_pause
                     )
+                runMenu.title = getString(R.string.end_server)
             }
             WebServerStatusEvent.STATUS_STOP -> {
                 runMenu.icon =
@@ -140,9 +147,7 @@ class MainActivity : AppCompatActivity() {
                         this@MainActivity,
                         android.R.drawable.ic_media_play
                     )
-            }
-            WebServerStatusEvent.STATUS_ERROR -> {
-
+                runMenu.title = getString(R.string.start_server)
             }
         }
     }

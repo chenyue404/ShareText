@@ -2,6 +2,10 @@
     <string name="app_name">分享文字</string>
     <string name="send">发送</string>
     <string name="start_server">开启服务</string>
+    <string name="end_server">结束服务</string>
     <string name="running">正在运行</string>
     <string name="copyed">复制成功</string>
+    <string name="qrcode">二维码</string>
+    <string name="port">端口</string>
+    <string name="about">关于</string>
 </resources>
