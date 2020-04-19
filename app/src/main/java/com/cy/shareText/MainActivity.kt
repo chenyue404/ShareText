@@ -161,10 +161,7 @@ class MainActivity : AppCompatActivity() {
                 dimen
             )
         )
-        val defaultItemAnimator = DefaultItemAnimator()
-        defaultItemAnimator.addDuration = 1000
-        defaultItemAnimator.removeDuration = 1000
-        rv_list.itemAnimator = defaultItemAnimator
+        rv_list.itemAnimator = DefaultItemAnimator()
     }
 
     @Subscribe
