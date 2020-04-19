@@ -1,9 +1,13 @@
 package com.cy.shareText
 
 import android.app.*
+import android.content.ClipboardManager
+import android.content.Context
 import android.content.Intent
 import android.os.Build
 import android.os.IBinder
+import androidx.core.app.NotificationManagerCompat
+import com.blankj.utilcode.util.CacheMemoryUtils
 import com.blankj.utilcode.util.LogUtils
 import com.blankj.utilcode.util.NetworkUtils
 import com.yanzhenjie.andserver.AndServer
@@ -62,6 +66,8 @@ class WebServer : IntentService(WebServer::class.simpleName) {
         address = NetworkUtils.getIpAddressByWifi() + ":" + port
         val notification: Notification =
             builder
+                .setOngoing(true)
+                .setPriority(Notification.PRIORITY_MAX)
                 .setSmallIcon(R.drawable.ic_launcher_foreground)
                 .setContentTitle(getString(R.string.running))
                 .setContentText(address)
@@ -99,9 +105,14 @@ class WebServer : IntentService(WebServer::class.simpleName) {
                     ).build()
                 )
                 .build()
-        startForeground(
-            1, notification
-        )
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            startForeground(1, notification)
+        } else {
+            with(NotificationManagerCompat.from(this)) {
+                notify(1, notification)
+            }
+        }
+        listenClipboardManager()
     }
 
     override fun onBind(p0: Intent?): IBinder? {
@@ -117,5 +128,47 @@ class WebServer : IntentService(WebServer::class.simpleName) {
 
     override fun onDestroy() {
         mServer.value.shutdown()
+        stopListenClipboardManager()
+        with(NotificationManagerCompat.from(this)) {
+            cancel(1)
+        }
+    }
+
+    private val listener: ClipboardManager.OnPrimaryClipChangedListener =
+        ClipboardManager.OnPrimaryClipChangedListener {
+            val clipboardManager =
+                this.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+
+            if (clipboardManager.hasPrimaryClip() && clipboardManager.primaryClip!!.itemCount > 0) {
+                val text = clipboardManager.primaryClip!!.getItemAt(0).text
+                LogUtils.e(text)
+
+                if (text.isEmpty()) {
+                    return@OnPrimaryClipChangedListener
+                }
+
+                var list = CacheMemoryUtils.getInstance()
+                    .get<ArrayList<String>>(MainActivity.KEY_CACHE)
+                if (list == null) {
+                    list = arrayListOf()
+                } else if (list.last() == text.toString()) {
+                    return@OnPrimaryClipChangedListener
+                }
+                list.add(text.toString())
+                CacheMemoryUtils.getInstance().put(MainActivity.KEY_CACHE, list)
+                EventBus.getDefault().post(NewTextEvent(text.toString()))
+            }
+        }
+
+    private fun listenClipboardManager() {
+        val clipboardManager = this.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+        clipboardManager
+            .addPrimaryClipChangedListener(listener)
+    }
+
+    private fun stopListenClipboardManager() {
+        val clipboardManager = this.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+        clipboardManager
+            .removePrimaryClipChangedListener(listener)
     }
 }

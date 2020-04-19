@@ -1,4 +1,4 @@
-package com.cy.shareText
+package com.cy.shareText.web
 
 import android.content.Context
 import com.yanzhenjie.andserver.annotation.Config

@@ -1,4 +1,4 @@
-package com.cy.shareText
+package com.cy.shareText.list
 
 import android.content.ClipData
 import android.content.ClipboardManager
@@ -10,6 +10,7 @@ import android.widget.ImageView
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.blankj.utilcode.util.ToastUtils
+import com.cy.shareText.R
 
 
 class ListAdapter(private val dataList: ArrayList<String>) :
@@ -17,7 +18,8 @@ class ListAdapter(private val dataList: ArrayList<String>) :
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
         return ViewHolder(
-            LayoutInflater.from(parent.context).inflate(R.layout.item_list, parent, false)
+            LayoutInflater.from(parent.context)
+                .inflate(R.layout.item_list, parent, false)
         )
     }
 

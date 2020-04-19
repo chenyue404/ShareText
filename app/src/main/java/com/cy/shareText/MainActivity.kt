@@ -10,17 +10,21 @@ import android.view.MenuInflater
 import android.view.MenuItem
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
+import androidx.recyclerview.widget.DefaultItemAnimator
 import com.blankj.utilcode.util.CacheMemoryUtils
 import com.blankj.utilcode.util.ServiceUtils
 import com.blankj.utilcode.util.ToastUtils
+import com.cy.shareText.list.ListAdapter
+import com.cy.shareText.list.SpaceItemDecoration
 import kotlinx.android.synthetic.main.activity_main.*
 import org.greenrobot.eventbus.EventBus
 import org.greenrobot.eventbus.Subscribe
 
+
 class MainActivity : AppCompatActivity() {
 
     companion object {
-        val KEY_CACHE = "list"
+        const val KEY_CACHE = "list"
     }
 
     private lateinit var runMenu: MenuItem
@@ -28,7 +32,7 @@ class MainActivity : AppCompatActivity() {
     private val intent = lazy {
         Intent(this, WebServer::class.java)
     }
-    private val dataList = arrayListOf<String>()
+    private var dataList = arrayListOf<String>()
     private lateinit var adapter: ListAdapter
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -46,7 +50,7 @@ class MainActivity : AppCompatActivity() {
         }
         rv_list.post { startServer() }
 
-        getShareText();
+        getShareText()
     }
 
     override fun onDestroy() {
@@ -54,23 +58,11 @@ class MainActivity : AppCompatActivity() {
         EventBus.getDefault().unregister(this)
     }
 
-    override fun onResume() {
-        super.onResume()
-        val list = CacheMemoryUtils.getInstance().get<ArrayList<String>>(KEY_CACHE)
-        if (list != null && !list.equals(dataList)) {
-            dataList.clear()
-            dataList.addAll(list)
-            adapter.notifyDataSetChanged()
-            rv_list.scrollToPosition(dataList.size - 1)
-        }
-    }
-
     private fun addText(text: String) {
         et_input.text?.clear()
         dataList.add(text)
-        adapter.notifyItemChanged(dataList.size - 1)
+        adapter.notifyItemInserted(dataList.size - 1)
         rv_list.scrollToPosition(dataList.size - 1)
-        CacheMemoryUtils.getInstance().put(KEY_CACHE, dataList)
     }
 
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
@@ -87,7 +79,6 @@ class MainActivity : AppCompatActivity() {
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        // Handle item selection
         return when (item.itemId) {
             R.id.m_start -> {
                 if (serverStatus == WebServerStatusEvent.STATUS_STOP) {
@@ -153,10 +144,27 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun initList() {
+        var list = CacheMemoryUtils.getInstance().get<ArrayList<String>>(KEY_CACHE)
+        if (list == null) {
+            list = arrayListOf()
+        }
+        dataList = list
+        CacheMemoryUtils.getInstance().put(KEY_CACHE, dataList)
         adapter = ListAdapter(dataList)
         rv_list.adapter = adapter
         val dimen = resources.getDimension(R.dimen.list_space).toInt()
-        rv_list.addItemDecoration(SpaceItemDecoration(dimen, 0, dimen, dimen))
+        rv_list.addItemDecoration(
+            SpaceItemDecoration(
+                dimen,
+                0,
+                dimen,
+                dimen
+            )
+        )
+        val defaultItemAnimator = DefaultItemAnimator()
+        defaultItemAnimator.addDuration = 1000
+        defaultItemAnimator.removeDuration = 1000
+        rv_list.itemAnimator = defaultItemAnimator
     }
 
     @Subscribe
@@ -166,12 +174,8 @@ class MainActivity : AppCompatActivity() {
             return
         }
         rv_list.post {
-            dataList.clear()
-            dataList.addAll(
-                CacheMemoryUtils.getInstance().get<ArrayList<String>>(KEY_CACHE)
-            )
-            adapter.notifyItemInserted(dataList.size - 1)
-            rv_list.scrollToPosition(adapter.getItemCount() - 1)
+            adapter.notifyItemInserted(adapter.itemCount - 1)
+            rv_list.scrollToPosition(adapter.itemCount - 1)
         }
     }
 
@@ -179,10 +183,12 @@ class MainActivity : AppCompatActivity() {
         val intent = getIntent()
         val action = intent.action
         val type = intent.type
-        if (Intent.ACTION_SEND.equals(action) && type != null) {
-            if ("text/plain".equals(type)) {
+        if (Intent.ACTION_SEND == action && type != null) {
+            if ("text/plain" == type) {
                 val share = intent.getStringExtra(Intent.EXTRA_TEXT)
-                addText(share)
+                share?.let {
+                    addText(share)
+                }
             }
         }
     }

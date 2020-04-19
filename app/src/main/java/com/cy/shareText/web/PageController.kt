@@ -1,4 +1,4 @@
-package com.cy.shareText
+package com.cy.shareText.web
 
 import com.yanzhenjie.andserver.annotation.Controller
 import com.yanzhenjie.andserver.annotation.GetMapping

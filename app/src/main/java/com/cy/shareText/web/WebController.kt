@@ -1,7 +1,9 @@
-package com.cy.shareText
+package com.cy.shareText.web
 
 import com.blankj.utilcode.util.CacheMemoryUtils
 import com.blankj.utilcode.util.GsonUtils
+import com.cy.shareText.MainActivity
+import com.cy.shareText.NewTextEvent
 import com.yanzhenjie.andserver.annotation.GetMapping
 import com.yanzhenjie.andserver.annotation.PostMapping
 import com.yanzhenjie.andserver.annotation.RequestParam
@@ -29,7 +31,6 @@ class WebController {
             list = arrayListOf()
         }
         list.add(text)
-        CacheMemoryUtils.getInstance().put(MainActivity.KEY_CACHE, list)
         EventBus.getDefault().post(NewTextEvent(text))
     }
 }

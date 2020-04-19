@@ -1,4 +1,4 @@
-package com.cy.shareText;
+package com.cy.shareText.list;
 
 import android.graphics.Rect;
 import android.view.View;
