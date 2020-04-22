@@ -5,3 +5,6 @@
 ## Release Notes
 - 2_1.1  
   监听剪切板活动。Android 10无法监听，请使用[Riru-ClipboardWhitelist](https://github.com/Kr328/Riru-ClipboardWhitelist)解决
+
+- 3_1.2
+  新的网页UI
