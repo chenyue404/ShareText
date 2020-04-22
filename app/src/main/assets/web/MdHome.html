@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width">
+    <title></title>
+    <link rel="stylesheet" href="css/mdui.min.css"/>
+    <script src="js/mdui.min.js"></script>
+</head>
+<style>
+		html,
+		body {
+			height: 100%;
+			word-wrap: break-word;
+			word-break: break-all;
+		}
+
+		#div_wrapper {
+			display: flex;
+			height: 100%;
+			flex-direction: column;
+		}
+
+		#div_content {
+			flex: 1 1 auto;
+			overflow-y: auto;
+		}
+
+		#div_bottom {
+			flex: none;
+		}
+
+</style>
+<body class="mdui-theme-primary-indigo mdui-theme-accent-green">
+<div id="div_wrapper">
+    <ul id="div_content" class="mdui-list">
+    </ul>
+    <div id="div_bottom" class="mdui-color-theme mdui-p-l-2 mdui-p-r-2 mdui-valign mdui-shadow-1">
+        <div class="mdui-textfield mdui-float-left mdui-m-r-2" style="width: 100%;">
+					<textarea id="input_text" class="mdui-textfield-input mdui-text-color-white"
+                              placeholder="Input something"
+                              onkeydown="keySend(event)"></textarea>
+        </div>
+        <button id="btn_add"
+                class="mdui-btn mdui-btn-raised mdui-ripple mdui-color-theme-accent mdui-float-right">
+            Send
+        </button>
+    </div>
+</div>
+<script>
+			let baseurl = "http://" + window.location.host
+			// baseurl = 'http://192.168.31.145:3080'
+			console.log(baseurl + "/list")
+			let $$ = mdui.JQ
+			var tempData
+
+			function getList() {
+				$$.ajax({
+					method: 'GET',
+					url: baseurl + '/list',
+					dataType: 'json',
+					success: function(data) {
+						let needEmpty = false;
+						if (tempData == null || data == null || data.length == 0 || tempData.length > data.length) {
+							needEmpty = true
+						} else {
+							for (var i = 0; i < tempData.length; i++) {
+								let old_a = tempData[i]
+								if (old_a != data[i]) {
+									needEmpty = true
+									break
+								}
+							}
+						}
+						// console.log(needEmpty + '22222222')
+
+						if (needEmpty) {
+							$$('#div_content').value = ''
+						}
+
+						let start_num = needEmpty ? 0 : tempData.length
+
+						for (var i = start_num; i < data.length; i++) {
+							let li = $$('<li class="mdui-list-item">' +
+								data[i] +
+								'</li>')
+							let diver = $$('<div class="mdui-divider"></div>')
+							$$('#div_content').append(li)
+								.append(diver)
+						}
+						tempData = data
+						document.getElementById('div_content').scrollTop = document.getElementById('div_content').scrollHeight
+
+						setTimeout(() => {
+							getList()
+						}, 3000)
+					},
+					error: function(xhr, textStatus) {
+						console.log(textStatus)
+					}
+				})
+			}
+
+			function addText(textStr) {
+				$$.ajax({
+					method: 'POST',
+					url: baseurl + '/addText',
+					data: {
+						"text": textStr
+					},
+					success: function(data) {
+						console.log(data)
+						document.getElementById("input_text").value = ''
+						getList()
+					},
+					error: function(xhr, textStatus) {
+						console.log(textStatus)
+					}
+				})
+			}
+			$$(function() {
+				getList()
+			})
+			$$("#btn_add").on("click", function(e) {
+				if (false) {
+					// document.getElementById('div_content').scrollTop = document.documentElement.scrollHeight || document.body.scrollHeight;
+					return
+				}
+
+				let textStr = $$("#input_text").val()
+				console.log(textStr)
+				if (textStr.length > 0) {
+					addText(textStr)
+				}
+			})
+
+			function keySend(event) {
+				if (event.ctrlKey && event.keyCode == 13) {
+					document.getElementById('btn_add').click()
+				}
+			}
+
+</script>
+</body>
+</html>

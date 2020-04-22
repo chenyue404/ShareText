@@ -9,6 +9,6 @@ class PageController {
     @GetMapping(path = ["/"])
     fun index(): String? {
         // Equivalent to [return "/index"].
-        return "forward:index.html"
+        return "forward:MdHome.html"
     }
 }
