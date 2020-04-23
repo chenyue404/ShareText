@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Share Text</string>
+    <string name="send">Send</string>
+    <string name="start_server">Start server</string>
+    <string name="end_server">End server</string>
+    <string name="running">Running</string>
+    <string name="copyed">Copied</string>
+    <string name="qrcode">QR code</string>
+    <string name="port">Port</string>
+    <string name="about">About</string>
+</resources>
