@@ -29,15 +29,22 @@
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
         <activity
+            android:name=".SettingsActivity"
+            android:label="@string/setting"
+            android:parentActivityName=".MainActivity" />
+        <activity
             android:name=".MainActivity"
             android:launchMode="singleInstance">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
+
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
             <intent-filter>
                 <action android:name="android.intent.action.SEND" />
+
                 <category android:name="android.intent.category.DEFAULT" />
+
                 <data android:mimeType="text/plain" />
             </intent-filter>
         </activity>
@@ -47,6 +54,7 @@
             android:theme="@android:style/Theme.Material.Dialog.NoActionBar" />
 
         <service android:name=".WebServer" />
+
         <receiver android:name=".StopServerReceiver" />
     </application>
 

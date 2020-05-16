@@ -8,12 +8,8 @@
         android:title="@string/start_server"
         app:showAsAction="ifRoom" />
     <item
-        android:id="@+id/m_port"
-        android:title="@string/port"
-        android:visible="false"
-        app:showAsAction="never" />
-    <item
-        android:id="@+id/m_about"
-        android:title="@string/about"
-        app:showAsAction="collapseActionView" />
+        android:id="@+id/m_setting"
+        android:icon="@drawable/ic_settings"
+        android:title="@string/setting"
+        app:showAsAction="ifRoom" />
 </menu>

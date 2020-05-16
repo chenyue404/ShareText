@@ -1,7 +1,6 @@
 package com.cy.shareText
 
 import android.content.Intent
-import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.text.TextUtils
@@ -79,25 +78,19 @@ class MainActivity : AppCompatActivity() {
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        return when (item.itemId) {
+        when (item.itemId) {
             R.id.m_start -> {
-                if (serverStatus == WebServerStatusEvent.STATUS_STOP) {
+                if (serverStatus != WebServerStatusEvent.STATUS_START) {
                     startServer()
                 } else {
                     stopServer()
                 }
-                true
             }
-            R.id.m_about -> {
-                val webPage: Uri = Uri.parse("https://github.com/chenyue404/ShareText")
-                val intent = Intent(Intent.ACTION_VIEW, webPage)
-                if (intent.resolveActivity(packageManager) != null) {
-                    startActivity(intent)
-                }
-                true
+            R.id.m_setting -> {
+                startActivity(Intent(this, SettingsActivity::class.java))
             }
-            else -> super.onOptionsItemSelected(item)
         }
+        return super.onOptionsItemSelected(item)
     }
 
     private fun startServer() {
@@ -132,7 +125,9 @@ class MainActivity : AppCompatActivity() {
                     )
                 runMenu.title = getString(R.string.end_server)
             }
-            WebServerStatusEvent.STATUS_STOP -> {
+            WebServerStatusEvent.STATUS_STOP,
+            WebServerStatusEvent.STATUS_ERROR
+            -> {
                 runMenu.icon =
                     ContextCompat.getDrawable(
                         this@MainActivity,

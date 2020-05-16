@@ -7,6 +7,7 @@ import android.content.Intent
 import android.os.Build
 import android.os.IBinder
 import androidx.core.app.NotificationManagerCompat
+import androidx.preference.PreferenceManager
 import com.blankj.utilcode.util.CacheMemoryUtils
 import com.blankj.utilcode.util.LogUtils
 import com.blankj.utilcode.util.NetworkUtils
@@ -16,8 +17,10 @@ import org.greenrobot.eventbus.EventBus
 import java.util.concurrent.TimeUnit
 
 class WebServer : IntentService(WebServer::class.simpleName) {
+    private val msg_id = 1
+    private var port = 3080
+
     companion object {
-        const val port = 3080
         var address = ""
     }
 
@@ -42,6 +45,7 @@ class WebServer : IntentService(WebServer::class.simpleName) {
                         .post(WebServerStatusEvent(WebServerStatusEvent.STATUS_ERROR).also {
                             it.errorMsg = e.toString()
                         })
+                    stopSelf()
                 }
             })
             .build()
@@ -49,6 +53,14 @@ class WebServer : IntentService(WebServer::class.simpleName) {
 
     override fun onCreate() {
         super.onCreate()
+        val portString = PreferenceManager.getDefaultSharedPreferences(this)
+            .getString(
+                getString(R.string.preference_port_key)
+                , resources.getInteger(R.integer.preference_port_default_value).toString()
+            )
+        portString?.let {
+            port = it.toInt()
+        }
         val channelId: String = getString(R.string.app_name)
         val builder =
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -106,10 +118,10 @@ class WebServer : IntentService(WebServer::class.simpleName) {
                 )
                 .build()
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            startForeground(1, notification)
+            startForeground(msg_id, notification)
         } else {
             with(NotificationManagerCompat.from(this)) {
-                notify(1, notification)
+                notify(msg_id, notification)
             }
         }
         listenClipboardManager()
@@ -129,9 +141,7 @@ class WebServer : IntentService(WebServer::class.simpleName) {
     override fun onDestroy() {
         mServer.value.shutdown()
         stopListenClipboardManager()
-        with(NotificationManagerCompat.from(this)) {
-            cancel(1)
-        }
+        NotificationManagerCompat.from(this@WebServer).cancel(msg_id)
     }
 
     private val listener: ClipboardManager.OnPrimaryClipChangedListener =

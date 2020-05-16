@@ -9,4 +9,5 @@
     <string name="qrcode">QR code</string>
     <string name="port">Port</string>
     <string name="about">About</string>
+    <string name="setting">Setting</string>
 </resources>

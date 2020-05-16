@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:tools="http://schemas.android.com/tools" tools:ignore="MissingTranslation">
+
+    <string name="preference_port_key">port</string>
+    <integer name="preference_port_default_value">3080</integer>
+    <string name="preference_github_address">https://github.com/chenyue404/ShareText</string>
+
+</resources>
