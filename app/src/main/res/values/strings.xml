@@ -9,5 +9,6 @@
     <string name="port">端口</string>
     <string name="about">关于</string>
     <string name="setting">设置</string>
+    <string name="hint_port" translatable="false">1-65535</string>
 
 </resources>
