@@ -29,9 +29,9 @@ class SettingsActivity : AppCompatActivity() {
         override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
             setPreferencesFromResource(R.xml.root_preferences, rootKey)
             val hintStr = getString(R.string.hint_port)
-            val findPreference =
+            val portPreference =
                 findPreference<EditTextPreference>(getString(R.string.preference_port_key))
-            findPreference?.apply {
+            portPreference?.apply {
                 setOnBindEditTextListener {
                     it.inputType = InputType.TYPE_CLASS_NUMBER
                     it.hint = hintStr
