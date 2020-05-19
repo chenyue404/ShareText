@@ -48,6 +48,14 @@ class ListAdapter(private val dataList: ArrayList<String>) :
 
                 ToastUtils.showShort(R.string.copyed)
             }
+
+            itemView.setOnClickListener {
+                tv_01.maxLines = if (tv_01.maxLines == 3) {
+                    Integer.MAX_VALUE
+                } else {
+                    3
+                }
+            }
         }
     }
 }

@@ -48,6 +48,10 @@ public class SpaceItemDecoration extends RecyclerView.ItemDecoration {
             if (bottom != -1) {
                 outRect.bottom = bottom;
             }
+            if (parent.getChildAdapterPosition(view) == 0
+                    && top == 0 && bottom != 0) {
+                outRect.top = bottom;
+            }
         }
     }
 }
