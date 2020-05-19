@@ -33,6 +33,7 @@ class ListAdapter(private val dataList: ArrayList<String>) :
 
     class ViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         val tv_01: TextView = itemView.findViewById(R.id.tv_01)
+        val tv_02: TextView = itemView.findViewById(R.id.tv_02)
         val iv_copy: ImageView = itemView.findViewById(R.id.iv_copy)
 
         init {
@@ -50,10 +51,20 @@ class ListAdapter(private val dataList: ArrayList<String>) :
             }
 
             itemView.setOnClickListener {
-                tv_01.maxLines = if (tv_01.maxLines == 3) {
-                    Integer.MAX_VALUE
-                } else {
-                    3
+//                tv_01.maxLines = if (tv_01.maxLines == 3) {
+//                    Integer.MAX_VALUE
+//                } else {
+//                    3
+//                }
+                if (tv_01.visibility == View.VISIBLE
+                    && tv_01.layout.getEllipsisCount(tv_01.layout.lineCount - 1) > 0
+                ) {
+                    tv_02.text = tv_01.text
+                    tv_02.visibility = View.VISIBLE
+                    tv_01.visibility = View.GONE
+                } else if (tv_01.visibility == View.GONE) {
+                    tv_01.visibility = View.VISIBLE
+                    tv_02.visibility = View.GONE
                 }
             }
         }
