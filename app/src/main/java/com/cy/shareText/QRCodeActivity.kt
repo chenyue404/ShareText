@@ -1,37 +1,38 @@
 package com.cy.shareText
 
 import android.os.Build
-import android.os.Bundle
-import androidx.appcompat.app.AppCompatActivity
+import android.widget.ImageView
 import androidx.core.content.ContextCompat
 import com.blankj.utilcode.util.ToastUtils
+import com.chenyue404.androidlib.extends.bind
+import com.chenyue404.androidlib.widget.BaseActivity
 import com.king.zxing.util.CodeUtils
-import kotlinx.android.synthetic.main.activity_qrcode.*
 
 /**
  * Created by Eddie on 2020/4/18 0018.
  */
-class QRCodeActivity : AppCompatActivity() {
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_qrcode)
+class QRCodeActivity : BaseActivity() {
+    private val ivCode: ImageView by bind(R.id.iv_code)
 
-        iv_code.post {
-            iv_code.setImageBitmap(
+    override fun getContentViewResId() = R.layout.activity_qrcode
+
+    override fun initView() {
+        ivCode.post {
+            ivCode.setImageBitmap(
                 CodeUtils.createQRCode(
                     WebServer.address,
-                    iv_code.height,
+                    ivCode.height,
                     ContextCompat.getColor(this, R.color.colorAccent)
                 )
             )
         }
-        iv_code.setOnClickListener {
+        ivCode.setOnClickListener {
             ToastUtils.showShort(
                 WebServer.address
             )
         }
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            iv_code.tooltipText = WebServer.address
+            ivCode.tooltipText = WebServer.address
         }
     }
 }

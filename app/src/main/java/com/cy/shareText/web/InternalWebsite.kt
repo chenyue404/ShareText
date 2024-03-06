@@ -10,7 +10,7 @@ import java.io.File
 @Config
 class InternalWebsite : WebConfig {
     override fun onConfig(context: Context?, delegate: WebConfig.Delegate?) {
-        delegate!!.addWebsite(AssetsWebsite(context!!, "/web"))
+        delegate!!.addWebsite(AssetsWebsite(context!!, "/web/"))
 
         delegate.setMultipart(
             Multipart.newBuilder()

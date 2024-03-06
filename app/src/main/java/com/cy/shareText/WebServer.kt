@@ -1,6 +1,10 @@
 package com.cy.shareText
 
-import android.app.*
+import android.app.IntentService
+import android.app.Notification
+import android.app.NotificationChannel
+import android.app.NotificationManager
+import android.app.PendingIntent
 import android.content.ClipboardManager
 import android.content.Context
 import android.content.Intent
@@ -55,8 +59,8 @@ class WebServer : IntentService(WebServer::class.simpleName) {
         super.onCreate()
         val portString = PreferenceManager.getDefaultSharedPreferences(this)
             .getString(
-                getString(R.string.preference_port_key)
-                , resources.getInteger(R.integer.preference_port_default_value).toString()
+                getString(R.string.preference_port_key),
+                resources.getInteger(R.integer.preference_port_default_value).toString()
             )
         portString?.let {
             port = it.toInt()
@@ -134,6 +138,7 @@ class WebServer : IntentService(WebServer::class.simpleName) {
     override fun onHandleIntent(p0: Intent?) {
     }
 
+    @Deprecated("Deprecated in Java")
     override fun onStart(intent: Intent?, startId: Int) {
         mServer.value.startup()
     }
@@ -149,19 +154,20 @@ class WebServer : IntentService(WebServer::class.simpleName) {
             val clipboardManager =
                 this.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
 
-            if (clipboardManager.hasPrimaryClip() && clipboardManager.primaryClip!!.itemCount > 0) {
-                val text = clipboardManager.primaryClip!!.getItemAt(0).text
+            if (clipboardManager.hasPrimaryClip() &&
+                (clipboardManager.primaryClip?.itemCount ?: 0) > 0
+            ) {
+                val text = clipboardManager.primaryClip?.getItemAt(0)?.text
                 LogUtils.e(text)
 
-                if (text.isEmpty()) {
-                    return@OnPrimaryClipChangedListener
-                }
+                text ?: return@OnPrimaryClipChangedListener
 
                 var list = CacheMemoryUtils.getInstance()
                     .get<ArrayList<String>>(MainActivity.KEY_CACHE)
-                if (list == null) {
+                if (list.isNullOrEmpty()) {
                     list = arrayListOf()
-                } else if (list.last() == text.toString()) {
+                }
+                if (list.isNotEmpty() && list.last() == text.toString()) {
                     return@OnPrimaryClipChangedListener
                 }
                 list.add(text.toString())

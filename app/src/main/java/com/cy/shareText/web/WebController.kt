@@ -30,7 +30,7 @@ class WebController {
         if (list == null) {
             list = arrayListOf()
         }
-        list.add(text)
+        if (list.lastOrNull() == text) return
         EventBus.getDefault().post(NewTextEvent(text))
     }
 }

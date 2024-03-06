@@ -7,8 +7,8 @@ import com.yanzhenjie.andserver.annotation.GetMapping
 class PageController {
 
     @GetMapping(path = ["/"])
-    fun index(): String? {
+    fun index(): String {
         // Equivalent to [return "/index"].
-        return "forward:MdHome.html"
+        return "forward:/MdHome.html"
     }
 }

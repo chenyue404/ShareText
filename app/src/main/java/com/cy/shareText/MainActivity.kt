@@ -2,29 +2,35 @@ package com.cy.shareText
 
 import android.content.Intent
 import android.os.Build
-import android.os.Bundle
 import android.text.TextUtils
 import android.view.Menu
 import android.view.MenuInflater
 import android.view.MenuItem
-import androidx.appcompat.app.AppCompatActivity
+import android.widget.Button
+import android.widget.EditText
 import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.DefaultItemAnimator
+import androidx.recyclerview.widget.RecyclerView
 import com.blankj.utilcode.util.CacheMemoryUtils
 import com.blankj.utilcode.util.ServiceUtils
 import com.blankj.utilcode.util.ToastUtils
+import com.chenyue404.androidlib.extends.bind
+import com.chenyue404.androidlib.widget.BaseActivity
 import com.cy.shareText.list.ListAdapter
 import com.cy.shareText.list.SpaceItemDecoration
-import kotlinx.android.synthetic.main.activity_main.*
 import org.greenrobot.eventbus.EventBus
 import org.greenrobot.eventbus.Subscribe
 
 
-class MainActivity : AppCompatActivity() {
+class MainActivity : BaseActivity() {
 
     companion object {
         const val KEY_CACHE = "list"
     }
+
+    private val rvList: RecyclerView by bind(R.id.rv_list)
+    private val etInput: EditText by bind(R.id.et_input)
+    private val btSend: Button by bind(R.id.bt_send)
 
     private lateinit var runMenu: MenuItem
     private var serverStatus = WebServerStatusEvent.STATUS_STOP
@@ -33,21 +39,20 @@ class MainActivity : AppCompatActivity() {
     }
     private var dataList = arrayListOf<String>()
     private lateinit var adapter: ListAdapter
+    override fun getContentViewResId() = R.layout.activity_main
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
+    override fun initView() {
         EventBus.getDefault().register(this)
-        setContentView(R.layout.activity_main)
         initList()
 
-        bt_send.setOnClickListener {
-            val text = et_input.text.toString().trim()
+        btSend.setOnClickListener {
+            val text = etInput.text.toString().trim()
             if (TextUtils.isEmpty(text)) {
                 return@setOnClickListener
             }
             addText(text)
         }
-        rv_list.post { startServer() }
+        rvList.post { startServer() }
 
         getShareText()
     }
@@ -57,11 +62,14 @@ class MainActivity : AppCompatActivity() {
         EventBus.getDefault().unregister(this)
     }
 
-    private fun addText(text: String) {
-        et_input.text?.clear()
+    private fun addText(text: String, clearInput: Boolean = true) {
+        if (clearInput) {
+            etInput.text?.clear()
+        }
+        if (dataList.lastOrNull() == text) return
         dataList.add(text)
         adapter.notifyItemInserted(dataList.size - 1)
-        rv_list.scrollToPosition(dataList.size - 1)
+        rvList.scrollToPosition(dataList.size - 1)
     }
 
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
@@ -86,6 +94,7 @@ class MainActivity : AppCompatActivity() {
                     stopServer()
                 }
             }
+
             R.id.m_setting -> {
                 startActivity(Intent(this, SettingsActivity::class.java))
             }
@@ -125,6 +134,7 @@ class MainActivity : AppCompatActivity() {
                     )
                 runMenu.title = getString(R.string.end_server)
             }
+
             WebServerStatusEvent.STATUS_STOP,
             WebServerStatusEvent.STATUS_ERROR
             -> {
@@ -143,12 +153,13 @@ class MainActivity : AppCompatActivity() {
         if (list == null) {
             list = arrayListOf()
         }
-        dataList = list
+        dataList.clear()
+        dataList.addAll(list)
         CacheMemoryUtils.getInstance().put(KEY_CACHE, dataList)
         adapter = ListAdapter(dataList)
-        rv_list.adapter = adapter
+        rvList.adapter = adapter
         val dimen = resources.getDimension(R.dimen.list_space).toInt()
-        rv_list.addItemDecoration(
+        rvList.addItemDecoration(
             SpaceItemDecoration(
                 dimen,
                 0,
@@ -156,7 +167,7 @@ class MainActivity : AppCompatActivity() {
                 dimen
             )
         )
-        rv_list.itemAnimator = DefaultItemAnimator()
+        rvList.itemAnimator = DefaultItemAnimator()
     }
 
     @Subscribe
@@ -165,10 +176,12 @@ class MainActivity : AppCompatActivity() {
         if (TextUtils.isEmpty(text)) {
             return
         }
-        rv_list.post {
-            adapter.notifyItemInserted(adapter.itemCount - 1)
-            rv_list.scrollToPosition(adapter.itemCount - 1)
-        }
+//        rvList.post {
+//            dataList.add(text)
+//            adapter.notifyItemInserted(adapter.itemCount - 1)
+//            rvList.scrollToPosition(adapter.itemCount - 1)
+//        }
+        addText(text, false)
     }
 
     private fun getShareText() {

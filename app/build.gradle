@@ -1,17 +1,15 @@
 apply plugin: 'com.android.application'
 apply plugin: 'kotlin-android'
-apply plugin: 'kotlin-android-extensions'
 apply plugin: 'kotlin-kapt'
-
+apply plugin: 'com.yanzhenjie.andserver'
 android {
 
-    compileSdkVersion 29
-    buildToolsVersion "29.0.3"
+    compileSdkVersion 34
 
     defaultConfig {
         applicationId "com.cy.shareText"
         minSdkVersion 21
-        targetSdkVersion 29
+        targetSdkVersion 34
         versionCode 6
         versionName '1.4.0'
     }
@@ -24,12 +22,16 @@ android {
         }
     }
     compileOptions {
-        sourceCompatibility JavaVersion.VERSION_1_8
-        targetCompatibility JavaVersion.VERSION_1_8
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
     }
-    applicationVariants.all {
+    kotlinOptions {
+        jvmTarget = '17'
+    }
+    namespace 'com.cy.shareText'
+    applicationVariants.configureEach {
         variant ->
-            variant.outputs.all {
+            variant.outputs.configureEach {
                 outputFileName = "ShareText_${variant.name}${variant.versionName}_${variant.versionCode}_${buildTime()}.apk"
             }
     }
@@ -43,18 +45,18 @@ static def buildTime() {
 
 dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
-    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlin_version"
-    implementation 'androidx.appcompat:appcompat:1.1.0'
-    implementation 'androidx.core:core-ktx:1.2.0'
-    implementation 'androidx.constraintlayout:constraintlayout:1.1.3'
-    implementation 'androidx.recyclerview:recyclerview:1.1.0'
-    implementation 'androidx.preference:preference:1.1.1'
-    implementation 'com.google.android.material:material:1.1.0'
+    implementation 'androidx.appcompat:appcompat:1.6.1'
+    implementation 'androidx.core:core-ktx:1.12.0'
+    implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
+    implementation 'androidx.recyclerview:recyclerview:1.3.2'
+    implementation 'androidx.preference:preference-ktx:1.2.1'
+    implementation 'com.google.android.material:material:1.11.0'
 
-    implementation 'com.yanzhenjie.andserver:api:2.1.1'
-    kapt 'com.yanzhenjie.andserver:processor:2.1.1'
+    implementation 'com.yanzhenjie.andserver:api:2.1.12'
+    kapt 'com.yanzhenjie.andserver:processor:2.1.12'
     implementation 'org.greenrobot:eventbus:3.2.0'
     implementation 'com.blankj:utilcodex:1.28.0'
-    implementation 'com.google.code.gson:gson:2.8.6'
+    implementation 'com.google.code.gson:gson:2.10.1'
     implementation 'com.king.zxing:zxing-lite:1.1.7-androidx'
+    implementation 'com.github.chenyue404:AndroidLib:1.0.14'
 }
