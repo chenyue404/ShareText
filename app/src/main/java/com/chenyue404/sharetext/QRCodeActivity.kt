@@ -36,6 +36,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import com.google.zxing.BarcodeFormat
 import com.google.zxing.MultiFormatWriter
@@ -83,7 +84,7 @@ private fun QRCodeScreen(address: String) {
         containerColor = UiStyle.ScreenBackground,
         topBar = {
             TopAppBar(
-                title = { Text("二维码") },
+                title = { Text(stringResource(R.string.qr_title)) },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = UiStyle.TopBarBackground
                 ),
@@ -91,7 +92,7 @@ private fun QRCodeScreen(address: String) {
                     IconButton(onClick = { (context as? ComponentActivity)?.finish() }) {
                         Icon(
                             imageVector = Icons.Filled.ArrowBack,
-                            contentDescription = "返回",
+                            contentDescription = stringResource(R.string.desc_back),
                             tint = UiStyle.PrimaryAction
                         )
                     }
@@ -117,13 +118,13 @@ private fun QRCodeScreen(address: String) {
                     verticalArrangement = Arrangement.spacedBy(UiStyle.InnerSpacing)
                 ) {
                     Text(
-                        text = "局域网访问二维码",
+                        text = stringResource(R.string.qr_lan_title),
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.SemiBold
                     )
                     Text(text = address)
                     Text(
-                        text = "同一局域网内打开此地址即可访问。",
+                        text = stringResource(R.string.qr_lan_hint),
                         color = UiStyle.SecondaryText,
                         style = MaterialTheme.typography.bodySmall
                     )
@@ -142,13 +143,13 @@ private fun QRCodeScreen(address: String) {
                 ) {
                     Image(
                         bitmap = bitmap.asImageBitmap(),
-                        contentDescription = "QR Code"
+                        contentDescription = stringResource(R.string.qr_image_desc)
                     )
                     Button(
                         modifier = Modifier.fillMaxWidth(),
                         onClick = { copyAddress(context, address) }
                     ) {
-                        Text("复制访问地址")
+                        Text(stringResource(R.string.qr_copy_address))
                     }
                 }
             }
@@ -159,7 +160,7 @@ private fun QRCodeScreen(address: String) {
 private fun copyAddress(context: Context, address: String) {
     val manager = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
     manager.setPrimaryClip(ClipData.newPlainText("sharetext_address", address))
-    Toast.makeText(context, "地址已复制", Toast.LENGTH_SHORT).show()
+    Toast.makeText(context, context.getString(R.string.toast_address_copied), Toast.LENGTH_SHORT).show()
 }
 
 private fun buildQrBitmap(content: String, size: Int): Bitmap {

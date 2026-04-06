@@ -9,7 +9,7 @@ object UiNoticeStore {
     fun savePortChanged(context: Context, port: Int) {
         context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
             .edit()
-            .putString(KEY_PORT_CHANGED, PortAdvice.portChangedMessage(port))
+            .putString(KEY_PORT_CHANGED, PortAdvice.portChangedMessage(context, port))
             .apply()
     }
 

@@ -1,12 +1,14 @@
 ﻿package com.chenyue404.sharetext
 
+import android.Manifest
 import android.content.Intent
-import android.net.ConnectivityManager
+import android.content.pm.PackageManager
 import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.core.app.ActivityCompat
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -52,6 +54,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.font.FontWeight
@@ -59,9 +62,6 @@ import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.delay
-import java.net.Inet4Address
-import java.net.InetAddress
-import java.net.NetworkInterface
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -72,6 +72,7 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         applyStatusBarStyle()
+        requestNotificationPermissionIfNeeded()
 
         WebService.setPort(PortConfig.load(this))
         WebService.requestStart(this)
@@ -86,7 +87,7 @@ class MainActivity : ComponentActivity() {
                     )
                 ) { innerPadding ->
                     MainScreen(
-                        serverIp = getLocalIpAddress(),
+                        serverIp = LanIpResolver.resolve(this),
                         modifier = Modifier.padding(innerPadding)
                     )
                 }
@@ -117,58 +118,24 @@ class MainActivity : ComponentActivity() {
         WebService.addText(text)
     }
 
-    private fun getLocalIpAddress(): String {
-        val fromActiveNetwork = getIpFromActiveNetwork()
-        if (fromActiveNetwork != null) return fromActiveNetwork
-        return getIpFromInterfaces() ?: "127.0.0.1"
+    private fun requestNotificationPermissionIfNeeded() {
+        if (android.os.Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.TIRAMISU) return
+        if (ActivityCompat.checkSelfPermission(
+                this,
+                Manifest.permission.POST_NOTIFICATIONS
+            ) == PackageManager.PERMISSION_GRANTED
+        ) {
+            return
+        }
+        ActivityCompat.requestPermissions(
+            this,
+            arrayOf(Manifest.permission.POST_NOTIFICATIONS),
+            REQUEST_CODE_NOTIFICATIONS
+        )
     }
 
-    private fun getIpFromActiveNetwork(): String? {
-        return try {
-            val cm = getSystemService(ConnectivityManager::class.java) ?: return null
-            val network = cm.activeNetwork ?: return null
-            val link = cm.getLinkProperties(network) ?: return null
-            link.linkAddresses
-                .mapNotNull { it.address as? Inet4Address }
-                .firstOrNull { isUsableLanIpv4(it) }
-                ?.hostAddress
-        } catch (_: Exception) {
-            null
-        }
-    }
-
-    private fun getIpFromInterfaces(): String? {
-        return try {
-            val all = NetworkInterface.getNetworkInterfaces().toList()
-                .filter { it.isUp && !it.isLoopback }
-                .sortedByDescending {
-                    val n = it.name.lowercase()
-                    when {
-                        n.startsWith("wlan") -> 3
-                        n.startsWith("eth") -> 2
-                        else -> 1
-                    }
-                }
-
-            all.asSequence()
-                .flatMap { it.inetAddresses.toList().asSequence() }
-                .filterIsInstance<Inet4Address>()
-                .firstOrNull { isUsableLanIpv4(it) }
-                ?.hostAddress
-        } catch (_: Exception) {
-            null
-        }
-    }
-
-    private fun isUsableLanIpv4(ip: InetAddress): Boolean {
-        if (ip.isAnyLocalAddress || ip.isLoopbackAddress || ip.isLinkLocalAddress || ip.isMulticastAddress) {
-            return false
-        }
-        val host = ip.hostAddress ?: return false
-        if (host.startsWith("169.254.")) return false
-        return host.startsWith("10.")
-                || host.startsWith("192.168.")
-                || host.matches(Regex("^172\\.(1[6-9]|2[0-9]|3[0-1])\\..+"))
+    companion object {
+        private const val REQUEST_CODE_NOTIFICATIONS = 1001
     }
 }
 
@@ -220,9 +187,9 @@ private fun MainScreen(serverIp: String, modifier: Modifier = Modifier) {
         verticalArrangement = Arrangement.spacedBy(UiStyle.InnerSpacing)
     ) {
         val statusText = when (status) {
-            ServiceState.RUNNING -> "运行中"
-            ServiceState.STOPPED -> "已停止"
-            ServiceState.ERROR -> "异常"
+            ServiceState.RUNNING -> stringResource(R.string.status_running)
+            ServiceState.STOPPED -> stringResource(R.string.status_stopped)
+            ServiceState.ERROR -> stringResource(R.string.status_error)
         }
         val statusColor = when (status) {
             ServiceState.RUNNING -> UiStyle.RunningText
@@ -245,12 +212,12 @@ private fun MainScreen(serverIp: String, modifier: Modifier = Modifier) {
                     verticalArrangement = Arrangement.spacedBy(2.dp)
                 ) {
                     Text(
-                        text = "状态：$statusText",
+                        text = stringResource(R.string.status_line, statusText),
                         color = statusColor,
                         fontWeight = FontWeight.SemiBold
                     )
                     if (status == ServiceState.RUNNING) {
-                        val address = "http://$serverIp:$currentPort"
+                        val address = context.getString(R.string.server_address_format, serverIp, currentPort)
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Text(
                                 text = address,
@@ -263,12 +230,12 @@ private fun MainScreen(serverIp: String, modifier: Modifier = Modifier) {
                                 modifier = Modifier.size(UiStyle.IconButtonSize),
                                 onClick = {
                                     clipboardManager.setText(AnnotatedString(address))
-                                    Toast.makeText(context, "地址已复制", Toast.LENGTH_SHORT).show()
+                                    Toast.makeText(context, context.getString(R.string.toast_address_copied), Toast.LENGTH_SHORT).show()
                                 }
                             ) {
                                 Icon(
                                     imageVector = Icons.Filled.ContentCopy,
-                                    contentDescription = "复制地址",
+                                    contentDescription = stringResource(R.string.desc_copy_address),
                                     tint = actionIconTint,
                                     modifier = Modifier.size(18.dp)
                                 )
@@ -276,7 +243,7 @@ private fun MainScreen(serverIp: String, modifier: Modifier = Modifier) {
                         }
                     } else {
                         Text(
-                            text = "地址不可用",
+                            text = stringResource(R.string.address_unavailable),
                             style = MaterialTheme.typography.bodySmall,
                             color = UiStyle.SecondaryText
                         )
@@ -296,7 +263,7 @@ private fun MainScreen(serverIp: String, modifier: Modifier = Modifier) {
                     ) {
                         Icon(
                             imageVector = Icons.Filled.Settings,
-                            contentDescription = "设置",
+                            contentDescription = stringResource(R.string.desc_settings),
                             tint = actionIconTint
                         )
                     }
@@ -305,7 +272,7 @@ private fun MainScreen(serverIp: String, modifier: Modifier = Modifier) {
                         onClick = { WebService.clearAll() }) {
                         Icon(
                             imageVector = Icons.Filled.DeleteSweep,
-                            contentDescription = "清空",
+                            contentDescription = stringResource(R.string.desc_clear_all),
                             tint = actionIconTint
                         )
                     }
@@ -321,12 +288,12 @@ private fun MainScreen(serverIp: String, modifier: Modifier = Modifier) {
                                 context.startActivity(go)
                             }
                         ) {
-                            Icon(
-                                imageVector = Icons.Filled.QrCode2,
-                                contentDescription = "二维码",
-                                tint = actionIconTint
-                            )
-                        }
+                                Icon(
+                                    imageVector = Icons.Filled.QrCode2,
+                                    contentDescription = stringResource(R.string.desc_qrcode),
+                                    tint = actionIconTint
+                                )
+                            }
                     }
                     IconButton(
                         modifier = Modifier.size(UiStyle.IconButtonSize),
@@ -340,7 +307,11 @@ private fun MainScreen(serverIp: String, modifier: Modifier = Modifier) {
                     ) {
                         Icon(
                             imageVector = if (status == ServiceState.RUNNING) Icons.Filled.Pause else Icons.Filled.PlayArrow,
-                            contentDescription = if (status == ServiceState.RUNNING) "停止服务" else "启动服务",
+                            contentDescription = if (status == ServiceState.RUNNING) {
+                                stringResource(R.string.desc_stop_service)
+                            } else {
+                                stringResource(R.string.desc_start_service)
+                            },
                             tint = actionIconTint
                         )
                     }
@@ -371,14 +342,14 @@ private fun MainScreen(serverIp: String, modifier: Modifier = Modifier) {
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         Text(
-                            text = "还没有文本内容，发送后会显示在这里。",
+                            text = stringResource(R.string.empty_list_hint),
                             modifier = Modifier.padding(UiStyle.CardPadding),
                             color = UiStyle.SecondaryText
                         )
                     }
                 }
             }
-            itemsIndexed(list) { index, item ->
+            itemsIndexed(list) { _, item ->
                 Card(
                     colors = CardDefaults.cardColors(containerColor = UiStyle.ListCardBackground),
                     shape = RoundedCornerShape(UiStyle.CornerRadius),
@@ -406,19 +377,19 @@ private fun MainScreen(serverIp: String, modifier: Modifier = Modifier) {
                                 modifier = Modifier.size(UiStyle.IconButtonSize),
                                 onClick = {
                                     clipboardManager.setText(AnnotatedString(item.text))
-                                    Toast.makeText(context, "已复制", Toast.LENGTH_SHORT).show()
+                                    Toast.makeText(context, context.getString(R.string.toast_item_copied), Toast.LENGTH_SHORT).show()
                                 }
                             ) {
                                 Icon(
                                     imageVector = Icons.Filled.ContentCopy,
-                                    contentDescription = "复制",
+                                    contentDescription = stringResource(R.string.desc_copy_item),
                                     tint = actionIconTint
                                 )
                             }
                             IconButton(
                                 modifier = Modifier.size(UiStyle.IconButtonSize),
                                 onClick = {
-                                    if (WebService.removeAt(index)) {
+                                    if (WebService.removeById(item.id)) {
                                         undoLabel = item.text
                                         undoVisible = true
                                         undoVersion += 1
@@ -427,7 +398,7 @@ private fun MainScreen(serverIp: String, modifier: Modifier = Modifier) {
                             ) {
                                 Icon(
                                     imageVector = Icons.Filled.Delete,
-                                    contentDescription = "删除",
+                                    contentDescription = stringResource(R.string.desc_delete_item),
                                     tint = actionIconTint
                                 )
                             }
@@ -448,7 +419,7 @@ private fun MainScreen(serverIp: String, modifier: Modifier = Modifier) {
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = "已删除：${undoLabel.take(18)}",
+                        text = stringResource(R.string.undo_line, undoLabel.take(18)),
                         modifier = Modifier.weight(1f),
                         color = UiStyle.SecondaryText,
                         maxLines = 1,
@@ -458,11 +429,11 @@ private fun MainScreen(serverIp: String, modifier: Modifier = Modifier) {
                         onClick = {
                             if (WebService.undoLastRemove()) {
                                 undoVisible = false
-                                Toast.makeText(context, "已撤销", Toast.LENGTH_SHORT).show()
+                                Toast.makeText(context, context.getString(R.string.toast_undo_done), Toast.LENGTH_SHORT).show()
                             }
                         }
                     ) {
-                        Text("撤销")
+                        Text(stringResource(R.string.undo_action))
                     }
                 }
             }
@@ -484,7 +455,7 @@ private fun MainScreen(serverIp: String, modifier: Modifier = Modifier) {
                         .align(Alignment.Bottom),
                     value = input,
                     onValueChange = { input = it },
-                    placeholder = { Text("输入文本") },
+                    placeholder = { Text(stringResource(R.string.input_placeholder)) },
                     singleLine = false,
                     minLines = 1,
                     maxLines = UiStyle.InputMaxLines
@@ -496,7 +467,7 @@ private fun MainScreen(serverIp: String, modifier: Modifier = Modifier) {
                     onClick = {
                         val clipText = clipboardManager.getText()?.text?.trim().orEmpty()
                         if (clipText.isEmpty()) {
-                            Toast.makeText(context, "剪贴板没有可填充内容", Toast.LENGTH_SHORT)
+                            Toast.makeText(context, context.getString(R.string.toast_clipboard_empty), Toast.LENGTH_SHORT)
                                 .show()
                             return@IconButton
                         }
@@ -508,7 +479,7 @@ private fun MainScreen(serverIp: String, modifier: Modifier = Modifier) {
                 ) {
                     Icon(
                         imageVector = Icons.Filled.ContentPaste,
-                        contentDescription = "填充剪贴板",
+                        contentDescription = stringResource(R.string.desc_fill_clipboard),
                         tint = actionIconTint
                     )
                 }
@@ -521,7 +492,7 @@ private fun MainScreen(serverIp: String, modifier: Modifier = Modifier) {
                 ) {
                     Icon(
                         imageVector = Icons.Filled.Send,
-                        contentDescription = "发送",
+                        contentDescription = stringResource(R.string.desc_send),
                         tint = if (canSend) actionIconTint else UiStyle.SecondaryText
                     )
                 }
@@ -534,3 +505,9 @@ private fun formatTime(timeMillis: Long): String {
     val formatter = SimpleDateFormat("HH:mm:ss", Locale.getDefault())
     return formatter.format(Date(timeMillis))
 }
+
+
+
+
+
+

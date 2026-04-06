@@ -6,11 +6,11 @@ import android.app.PendingIntent
 import android.app.Service
 import android.content.Context
 import android.content.Intent
-import android.net.ConnectivityManager
 import android.os.Build
 import android.os.IBinder
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
+import androidx.core.content.ContextCompat
 import io.ktor.http.ContentType
 import io.ktor.server.cio.CIO
 import io.ktor.server.engine.EmbeddedServer
@@ -24,9 +24,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import org.json.JSONArray
 import org.json.JSONObject
-import java.net.Inet4Address
-import java.net.InetAddress
-import java.net.NetworkInterface
 import java.util.concurrent.atomic.AtomicInteger
 
 data class ShareTextItem(
@@ -47,27 +44,29 @@ class WebService : Service() {
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         if (intent?.action == ACTION_STOP_SERVER) {
             stopServerIfNeeded(clearError = false)
+            removeForegroundNotification()
             stopSelf()
             return START_NOT_STICKY
         }
+
+        promoteToForeground(getString(R.string.notify_service_starting))
+
         if (intent?.action == ACTION_RESTART_SERVER) {
             stopServerIfNeeded(clearError = true)
-            startServerIfNeeded()
-            if (serviceState.value == ServiceState.RUNNING) {
-                showOrUpdateNotification()
-            }
-            return START_STICKY
         }
 
         startServerIfNeeded()
         if (serviceState.value == ServiceState.RUNNING) {
-            showOrUpdateNotification()
+            promoteToForeground("http://${LanIpResolver.resolve(this)}:${getPort()}")
+        } else {
+            promoteToForeground(lastError.value ?: getString(R.string.error_service_start_failed))
         }
         return START_STICKY
     }
 
     override fun onDestroy() {
         stopServerIfNeeded(clearError = false)
+        removeForegroundNotification()
         NotificationManagerCompat.from(this).cancel(NOTIFICATION_ID)
         _serviceState.value = ServiceState.STOPPED
         super.onDestroy()
@@ -83,7 +82,7 @@ class WebService : Service() {
 
             if (!PortConfig.isPortAvailable(currentPort)) {
                 _serviceState.value = ServiceState.ERROR
-                _lastError.value = PortAdvice.occupiedMessage(currentPort)
+                _lastError.value = PortAdvice.occupiedMessage(this, currentPort)
                 return
             }
 
@@ -126,6 +125,15 @@ class WebService : Service() {
                             val index = params["index"]?.toIntOrNull()
                             if (index != null) {
                                 removeAt(index)
+                            }
+                            call.respondText("ok", ContentType.Text.Plain)
+                        }
+
+                        post("/removeById") {
+                            val params = call.receiveParameters()
+                            val id = params["id"]?.toIntOrNull()
+                            if (id != null) {
+                                removeById(id)
                             }
                             call.respondText("ok", ContentType.Text.Plain)
                         }
@@ -198,9 +206,13 @@ class WebService : Service() {
         return assets.open("main.html").bufferedReader(Charsets.UTF_8).use { it.readText() }
     }
 
-    private fun showOrUpdateNotification() {
+    private fun promoteToForeground(contentText: String) {
         ensureChannel()
-        val address = "http://${getLocalIpAddress()}:${getPort()}"
+        val notification = buildNotification(contentText)
+        startForeground(NOTIFICATION_ID, notification)
+    }
+
+    private fun buildNotification(contentText: String): android.app.Notification {
         val pendingIntentFlags = PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
 
         val openMainIntent = PendingIntent.getActivity(
@@ -214,7 +226,11 @@ class WebService : Service() {
             2,
             Intent(this, QRCodeActivity::class.java).putExtra(
                 QRCodeActivity.EXTRA_ADDRESS,
-                address
+                if (serviceState.value == ServiceState.RUNNING) {
+                    "http://${LanIpResolver.resolve(this)}:${getPort()}"
+                } else {
+                    ""
+                }
             ),
             pendingIntentFlags
         )
@@ -227,16 +243,25 @@ class WebService : Service() {
 
         val notification = NotificationCompat.Builder(this, CHANNEL_ID)
             .setSmallIcon(android.R.drawable.stat_notify_sync)
-            .setContentTitle("ShareText 服务运行中")
-            .setContentText(address)
-            .setStyle(NotificationCompat.BigTextStyle().bigText(address))
+            .setContentTitle(getString(R.string.notify_service_running))
+            .setContentText(contentText)
+            .setStyle(NotificationCompat.BigTextStyle().bigText(contentText))
             .setOngoing(true)
             .setContentIntent(openMainIntent)
-            .addAction(android.R.drawable.ic_menu_camera, "二维码", openQrIntent)
-            .addAction(android.R.drawable.ic_menu_close_clear_cancel, "停止服务", stopIntent)
+            .addAction(android.R.drawable.ic_menu_camera, getString(R.string.desc_qrcode), openQrIntent)
+            .addAction(android.R.drawable.ic_menu_close_clear_cancel, getString(R.string.desc_stop_service), stopIntent)
             .build()
 
-        NotificationManagerCompat.from(this).notify(NOTIFICATION_ID, notification)
+        return notification
+    }
+
+    private fun removeForegroundNotification() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+            stopForeground(STOP_FOREGROUND_REMOVE)
+        } else {
+            @Suppress("DEPRECATION")
+            stopForeground(true)
+        }
     }
 
     private fun ensureChannel() {
@@ -244,72 +269,22 @@ class WebService : Service() {
         val manager = getSystemService(NotificationManager::class.java) ?: return
         val channel = NotificationChannel(
             CHANNEL_ID,
-            "ShareText 服务",
+            getString(R.string.notify_channel_name),
             NotificationManager.IMPORTANCE_DEFAULT
         )
         manager.createNotificationChannel(channel)
     }
 
-    private fun getLocalIpAddress(): String {
-        val fromActiveNetwork = getIpFromActiveNetwork()
-        if (fromActiveNetwork != null) return fromActiveNetwork
-        return getIpFromInterfaces() ?: "127.0.0.1"
-    }
-
-    private fun getIpFromActiveNetwork(): String? {
-        return try {
-            val cm = getSystemService(ConnectivityManager::class.java) ?: return null
-            val network = cm.activeNetwork ?: return null
-            val link = cm.getLinkProperties(network) ?: return null
-            link.linkAddresses
-                .mapNotNull { it.address as? Inet4Address }
-                .firstOrNull { isUsableLanIpv4(it) }
-                ?.hostAddress
-        } catch (_: Exception) {
-            null
-        }
-    }
-
-    private fun getIpFromInterfaces(): String? {
-        return try {
-            val all = NetworkInterface.getNetworkInterfaces().toList()
-                .filter { it.isUp && !it.isLoopback }
-                .sortedByDescending {
-                    val n = it.name.lowercase()
-                    when {
-                        n.startsWith("wlan") -> 3
-                        n.startsWith("eth") -> 2
-                        else -> 1
-                    }
-                }
-
-            all.asSequence()
-                .flatMap { it.inetAddresses.toList().asSequence() }
-                .filterIsInstance<Inet4Address>()
-                .firstOrNull { isUsableLanIpv4(it) }
-                ?.hostAddress
-        } catch (_: Exception) {
-            null
-        }
-    }
-
-    private fun isUsableLanIpv4(ip: InetAddress): Boolean {
-        if (ip.isAnyLocalAddress || ip.isLoopbackAddress || ip.isLinkLocalAddress || ip.isMulticastAddress) {
-            return false
-        }
-        val host = ip.hostAddress ?: return false
-        if (host.startsWith("169.254.")) return false
-        return host.startsWith("10.")
-                || host.startsWith("192.168.")
-                || host.matches(Regex("^172\\.(1[6-9]|2[0-9]|3[0-1])\\..+"))
-    }
-
     private fun simplifyError(e: Throwable): String {
         val msg = e.message?.trim().orEmpty()
         if (msg.contains("Address already in use", ignoreCase = true)) {
-            return PortAdvice.occupiedMessage(getPort())
+            return PortAdvice.occupiedMessage(this, getPort())
         }
-        return if (msg.isEmpty()) "服务启动失败" else "服务启动失败：$msg"
+        return if (msg.isEmpty()) {
+            getString(R.string.error_service_start_failed)
+        } else {
+            getString(R.string.error_service_start_failed_with_detail, msg)
+        }
     }
 
     companion object {
@@ -342,7 +317,7 @@ class WebService : Service() {
         val portFlow = _portFlow.asStateFlow()
 
         fun requestStart(context: Context) {
-            context.startService(Intent(context, WebService::class.java))
+            ContextCompat.startForegroundService(context, Intent(context, WebService::class.java))
         }
 
         fun requestStop(context: Context) {
@@ -354,7 +329,8 @@ class WebService : Service() {
         }
 
         fun requestRestart(context: Context) {
-            context.startService(
+            ContextCompat.startForegroundService(
+                context,
                 Intent(context, WebService::class.java).setAction(
                     ACTION_RESTART_SERVER
                 )
@@ -404,6 +380,17 @@ class WebService : Service() {
             }
         }
 
+        fun removeById(id: Int): Boolean {
+            synchronized(serverLock) {
+                val index = textItems.indexOfFirst { it.id == id }
+                if (index == -1) return false
+                val removed = textItems.removeAt(index)
+                lastRemovedItem = RemovedItem(item = removed, index = index)
+                _listFlow.value = textItems.toList()
+                return true
+            }
+        }
+
         fun undoLastRemove(): Boolean {
             synchronized(serverLock) {
                 val pending = lastRemovedItem ?: return false
@@ -430,3 +417,9 @@ enum class ServiceState {
     STOPPED,
     ERROR
 }
+
+
+
+
+
+

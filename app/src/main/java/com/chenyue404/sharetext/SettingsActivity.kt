@@ -33,6 +33,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 
@@ -98,7 +99,7 @@ private fun SettingsScreen(
         containerColor = UiStyle.ScreenBackground,
         topBar = {
             TopAppBar(
-                title = { Text("设置") },
+                title = { Text(stringResource(R.string.settings_title)) },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = UiStyle.TopBarBackground
                 ),
@@ -106,7 +107,7 @@ private fun SettingsScreen(
                     IconButton(onClick = onBack) {
                         Icon(
                             imageVector = Icons.Filled.ArrowBack,
-                            contentDescription = "返回",
+                            contentDescription = stringResource(R.string.desc_back),
                             tint = UiStyle.PrimaryAction
                         )
                     }
@@ -131,13 +132,13 @@ private fun SettingsScreen(
                     verticalArrangement = Arrangement.spacedBy(UiStyle.InnerSpacing)
                 ) {
                     Text(
-                        text = "服务设置",
+                        text = stringResource(R.string.settings_service_title),
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.SemiBold
                     )
-                    Text(text = "当前端口：$initialPort")
+                    Text(text = stringResource(R.string.settings_current_port, initialPort))
                     Text(
-                        text = "可用范围：1 - 65535",
+                        text = stringResource(R.string.settings_port_range),
                         color = UiStyle.SecondaryText,
                         style = MaterialTheme.typography.bodySmall
                     )
@@ -157,7 +158,7 @@ private fun SettingsScreen(
                         modifier = Modifier.fillMaxWidth(),
                         value = portText,
                         onValueChange = { portText = it },
-                        label = { Text("服务端口") },
+                        label = { Text(stringResource(R.string.settings_port_label)) },
                         singleLine = true,
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
                     )
@@ -167,7 +168,7 @@ private fun SettingsScreen(
                             modifier = Modifier.fillMaxWidth(),
                             onClick = { portText = suggestedPort.toString() }
                         ) {
-                            Text("使用建议端口：$suggestedPort")
+                            Text(stringResource(R.string.settings_use_suggested_port, suggestedPort))
                         }
                     }
 
@@ -176,7 +177,7 @@ private fun SettingsScreen(
                         onClick = {
                             val port = portText.toIntOrNull()
                             if (port == null) {
-                                Toast.makeText(context, "端口必须是数字", Toast.LENGTH_SHORT).show()
+                                Toast.makeText(context, context.getString(R.string.toast_port_number_only), Toast.LENGTH_SHORT).show()
                                 return@Button
                             }
 
@@ -184,7 +185,7 @@ private fun SettingsScreen(
                                 SaveResult.Invalid -> {
                                     Toast.makeText(
                                         context,
-                                        "端口必须是 1 到 65535 的数字",
+                                        context.getString(R.string.toast_port_out_of_range),
                                         Toast.LENGTH_SHORT
                                     ).show()
                                 }
@@ -192,7 +193,7 @@ private fun SettingsScreen(
                                 SaveResult.Occupied -> {
                                     Toast.makeText(
                                         context,
-                                        PortAdvice.saveFailedOccupiedMessage(port),
+                                        PortAdvice.saveFailedOccupiedMessage(context, port),
                                         Toast.LENGTH_SHORT
                                     ).show()
                                 }
@@ -200,7 +201,7 @@ private fun SettingsScreen(
                                 SaveResult.Success -> {
                                     Toast.makeText(
                                         context,
-                                        PortAdvice.saveSuccessMessage(port),
+                                        PortAdvice.saveSuccessMessage(context, port),
                                         Toast.LENGTH_SHORT
                                     ).show()
                                     onDone()
@@ -208,7 +209,7 @@ private fun SettingsScreen(
                             }
                         }
                     ) {
-                        Text("保存并重启服务")
+                        Text(stringResource(R.string.settings_save_restart))
                     }
                 }
             }

@@ -261,6 +261,7 @@
     let last = [];
     let loopTimer = null;
     let undoTimer = null;
+    let isFetchingList = false;
 
     addrEl.textContent = `地址：${baseUrl}`;
 
@@ -291,7 +292,7 @@
             return;
         }
 
-        safe.forEach((item, index) => {
+        safe.forEach((item) => {
             const card = document.createElement("div");
             card.className = "item";
             const row = document.createElement("div");
@@ -318,9 +319,9 @@
             delBtn.className = "miniBtn";
             delBtn.textContent = "删除";
             delBtn.addEventListener("click", async () => {
-                await removeAt(index);
+                await removeById(item.id);
                 showUndo(item.text);
-                await fetchList();
+                await fetchList({ reschedule: false });
             });
 
             actions.appendChild(copyBtn);
@@ -347,14 +348,15 @@
             const text = raw.trim();
             if (!text) return null;
             if (text.toLowerCase() === "null" || text.toLowerCase() === "undefined") return null;
-            return { text, timeMillis: Date.now() };
+            return { id: null, text, timeMillis: Date.now() };
         }
         if (typeof raw === "object") {
             const text = (raw.text == null ? "" : String(raw.text).trim());
             if (!text) return null;
             if (text.toLowerCase() === "null" || text.toLowerCase() === "undefined") return null;
             const timeMillis = Number(raw.timeMillis) || Date.now();
-            return { text, timeMillis };
+            const id = Number.isFinite(Number(raw.id)) ? Number(raw.id) : null;
+            return { id, text, timeMillis };
         }
         return null;
     }
@@ -367,7 +369,14 @@
         return `${hh}:${mm}:${ss}`;
     }
 
-    async function fetchList() {
+    function scheduleNextFetch() {
+        if (loopTimer) clearTimeout(loopTimer);
+        loopTimer = setTimeout(() => fetchList({ reschedule: true }), 1800);
+    }
+
+    async function fetchList({ reschedule = true } = {}) {
+        if (isFetchingList) return;
+        isFetchingList = true;
         try {
             const resp = await fetch(`${baseUrl}/list`, { cache: "no-store" });
             if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
@@ -377,7 +386,10 @@
         } catch (err) {
             setNetState(false, "连接失败");
         } finally {
-            loopTimer = setTimeout(fetchList, 1800);
+            isFetchingList = false;
+            if (reschedule) {
+                scheduleNextFetch();
+            }
         }
     }
 
@@ -394,10 +406,13 @@
         }
     }
 
-    async function removeAt(index) {
+    async function removeById(id) {
+        if (id == null) {
+            throw new Error("missing id");
+        }
         const form = new URLSearchParams();
-        form.append("index", String(index));
-        const resp = await fetch(`${baseUrl}/removeAt`, {
+        form.append("id", String(id));
+        const resp = await fetch(`${baseUrl}/removeById`, {
             method: "POST",
             headers: { "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8" },
             body: form.toString()
@@ -441,7 +456,7 @@
         try {
             await addText(text);
             inputEl.value = "";
-            await fetchList();
+            await fetchList({ reschedule: false });
         } catch (_) {
             setNetState(false, "发送失败");
         } finally {
@@ -454,7 +469,7 @@
         try {
             await undoRemove();
             hideUndo();
-            await fetchList();
+            await fetchList({ reschedule: false });
         } catch (_) {
             setNetState(false, "撤销失败");
         }
@@ -487,7 +502,7 @@
         undoBarEl.classList.remove("show");
     }
 
-    fetchList();
+    fetchList({ reschedule: true });
 </script>
 </body>
 </html>
