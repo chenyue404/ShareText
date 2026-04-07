@@ -15,8 +15,8 @@ android {
         applicationId = "com.chenyue404.sharetext"
         minSdk = 25
         targetSdk = 36
-        versionCode = 1
-        versionName = "1.0"
+        versionCode = 10
+        versionName = "2.0"
     }
 
     buildTypes {
