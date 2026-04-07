@@ -1,4 +1,4 @@
-package com.chenyue404.sharetext
+﻿package com.cy.shareText
 
 import org.junit.Assert.assertEquals
 import org.junit.Test
@@ -33,3 +33,4 @@ class PortAdviceTest {
         assertEquals("服务端口已切换到：3088", PortAdvice.portChangedMessage(3088))
     }
 }
+

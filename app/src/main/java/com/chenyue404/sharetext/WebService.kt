@@ -1,4 +1,4 @@
-﻿package com.chenyue404.sharetext
+﻿package com.cy.shareText
 
 import android.app.NotificationChannel
 import android.app.NotificationManager
@@ -303,8 +303,8 @@ class WebService : Service() {
         private const val DEFAULT_PORT = 3080
         private const val CHANNEL_ID = "share_text_service"
         private const val NOTIFICATION_ID = 2001
-        private const val ACTION_STOP_SERVER = "com.chenyue404.sharetext.action.STOP_SERVER"
-        private const val ACTION_RESTART_SERVER = "com.chenyue404.sharetext.action.RESTART_SERVER"
+        private const val ACTION_STOP_SERVER = "com.cy.shareText.action.STOP_SERVER"
+        private const val ACTION_RESTART_SERVER = "com.cy.shareText.action.RESTART_SERVER"
 
         private val serverLock = Any()
         private var server: EmbeddedServer<*, *>? = null
@@ -429,6 +429,7 @@ enum class ServiceState {
     STOPPED,
     ERROR
 }
+
 
 
 

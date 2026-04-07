@@ -1,4 +1,4 @@
-package com.chenyue404.sharetext
+﻿package com.cy.shareText
 
 import android.content.Context
 import android.net.ConnectivityManager
@@ -61,3 +61,4 @@ object LanIpResolver {
                 || host.matches(Regex("^172\\.(1[6-9]|2[0-9]|3[0-1])\\..+"))
     }
 }
+

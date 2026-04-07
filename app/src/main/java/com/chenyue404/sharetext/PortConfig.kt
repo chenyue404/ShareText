@@ -1,4 +1,4 @@
-﻿package com.chenyue404.sharetext
+﻿package com.cy.shareText
 
 import android.content.Context
 import java.net.ServerSocket
@@ -44,3 +44,4 @@ object PortConfig {
         return null
     }
 }
+

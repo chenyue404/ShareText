@@ -1,4 +1,4 @@
-﻿package com.chenyue404.sharetext
+﻿package com.cy.shareText
 
 import android.content.Context
 
@@ -36,3 +36,4 @@ object PortAdvice {
         return context.getString(R.string.port_switched_to, port)
     }
 }
+

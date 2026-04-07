@@ -1,21 +1,26 @@
-# Add project specific ProGuard rules here.
-# You can control the set of applied configuration files using the
-# proguardFiles setting in build.gradle.
-#
-# For more details, see
-#   http://developer.android.com/guide/developing/tools/proguard.html
+﻿# -----------------------------
+# ShareText release proguard rules
+# -----------------------------
 
-# If your project uses WebView with JS, uncomment the following
-# and specify the fully qualified class name to the JavaScript interface
-# class:
-#-keepclassmembers class fqcn.of.javascript.interface.for.webview {
-#   public *;
-#}
+# Keep annotations/signatures to avoid issues with Kotlin/Compose/runtime metadata.
+-keepattributes *Annotation*,InnerClasses,EnclosingMethod,Signature
 
-# Uncomment this to preserve the line number information for
-# debugging stack traces.
-#-keepattributes SourceFile,LineNumberTable
+# Keep app entry components (explicit and stable in release).
+-keep class com.cy.shareText.MainActivity { *; }
+-keep class com.cy.shareText.SettingsActivity { *; }
+-keep class com.cy.shareText.QRCodeActivity { *; }
+-keep class com.cy.shareText.WebService { *; }
 
-# If you keep the line number information, uncomment this to
-# hide the original source file name.
-#-renamesourcefileattribute SourceFile
+# Keep Ktor server entry points used by embeddedServer/routing lambdas.
+-keep class io.ktor.server.** { *; }
+-keep class io.ktor.http.** { *; }
+
+# Ktor/slf4j optional logger bindings may be absent on Android.
+-dontwarn org.slf4j.**
+-dontwarn com.sun.nio.file.SensitivityWatchEventModifier
+-dontwarn java.lang.management.ManagementFactory
+-dontwarn java.lang.management.RuntimeMXBean
+
+# Keep ZXing core package used for QR code generation.
+-keep class com.google.zxing.** { *; }
+

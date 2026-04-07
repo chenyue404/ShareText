@@ -1,4 +1,4 @@
-package com.chenyue404.sharetext.ui.theme
+﻿package com.cy.shareText.ui.theme
 
 import androidx.compose.material3.Typography
 import androidx.compose.ui.text.TextStyle

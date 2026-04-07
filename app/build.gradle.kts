@@ -1,3 +1,6 @@
+﻿import java.io.FileInputStream
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
@@ -5,23 +8,52 @@ plugins {
 //    alias(libs.plugins.ktor.plugin)
 }
 
+val keystoreProperties = Properties()
+val keystorePropertiesFile = rootProject.file("keystore.properties")
+val hasKeystoreProperties = keystorePropertiesFile.exists()
+if (hasKeystoreProperties) {
+    FileInputStream(keystorePropertiesFile).use { stream ->
+        keystoreProperties.load(stream)
+    }
+}
+
 android {
-    namespace = "com.chenyue404.sharetext"
+    namespace = "com.cy.shareText"
     compileSdk {
         version = release(36)
     }
 
     defaultConfig {
-        applicationId = "com.chenyue404.sharetext"
+        applicationId = "com.cy.shareText"
         minSdk = 25
         targetSdk = 36
         versionCode = 10
         versionName = "2.0"
     }
 
+    signingConfigs {
+        create("common") {
+            if (hasKeystoreProperties) {
+                storeFile = file(keystoreProperties["storeFile"] as String)
+                storePassword = keystoreProperties["storePassword"] as String
+                keyAlias = keystoreProperties["keyAlias"] as String
+                keyPassword = keystoreProperties["keyPassword"] as String
+            }
+        }
+    }
+
     buildTypes {
+        debug {
+            if (hasKeystoreProperties) {
+                signingConfig = signingConfigs.getByName("common")
+            }
+        }
         release {
-            isMinifyEnabled = false
+            isMinifyEnabled = true
+            isShrinkResources = true
+            if (hasKeystoreProperties) {
+                signingConfig = signingConfigs.getByName("common")
+            }
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
@@ -65,3 +97,4 @@ dependencies {
     implementation("com.google.zxing:core:3.5.3")
     testImplementation(libs.junit)
 }
+

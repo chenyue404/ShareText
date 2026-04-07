@@ -1,4 +1,4 @@
-﻿package com.chenyue404.sharetext
+﻿package com.cy.shareText
 
 import android.content.ClipData
 import android.content.ClipboardManager
@@ -178,3 +178,4 @@ private fun buildQrBitmap(content: String, size: Int): Bitmap {
     }
     return Bitmap.createBitmap(pixels, size, size, Bitmap.Config.ARGB_8888)
 }
+

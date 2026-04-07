@@ -1,4 +1,4 @@
-package com.chenyue404.sharetext
+﻿package com.cy.shareText
 
 import android.content.Context
 
@@ -22,3 +22,4 @@ object UiNoticeStore {
         return value
     }
 }
+

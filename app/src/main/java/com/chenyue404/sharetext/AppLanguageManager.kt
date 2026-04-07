@@ -1,4 +1,4 @@
-package com.chenyue404.sharetext
+﻿package com.cy.shareText
 
 import android.app.LocaleManager
 import android.content.Context
@@ -41,3 +41,4 @@ object AppLanguageManager {
         return AppCompatDelegate.getApplicationLocales().toLanguageTags()
     }
 }
+

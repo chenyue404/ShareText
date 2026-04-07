@@ -1,4 +1,4 @@
-﻿package com.chenyue404.sharetext.ui.theme
+﻿package com.cy.shareText.ui.theme
 
 import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme
@@ -44,3 +44,4 @@ fun ShareTextTheme(
         content = content
     )
 }
+

@@ -1,4 +1,4 @@
-package com.chenyue404.sharetext
+﻿package com.cy.shareText
 
 import android.app.Activity
 import androidx.compose.ui.graphics.Color
@@ -31,3 +31,4 @@ fun Activity.applyStatusBarStyle() {
     window.statusBarColor = UiStyle.TopBarBackground.toArgb()
     WindowCompat.getInsetsController(window, window.decorView).isAppearanceLightStatusBars = true
 }
+

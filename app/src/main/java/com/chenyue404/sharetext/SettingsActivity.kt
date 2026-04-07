@@ -1,4 +1,4 @@
-﻿package com.chenyue404.sharetext
+﻿package com.cy.shareText
 
 import android.os.Bundle
 import android.widget.Toast
@@ -287,3 +287,4 @@ private fun SettingsScreen(
         }
     }
 }
+
