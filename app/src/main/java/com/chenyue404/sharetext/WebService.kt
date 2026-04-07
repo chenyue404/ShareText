@@ -24,6 +24,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import org.json.JSONArray
 import org.json.JSONObject
+import java.util.Locale
 import java.util.concurrent.atomic.AtomicInteger
 
 data class ShareTextItem(
@@ -203,7 +204,18 @@ class WebService : Service() {
     }
 
     private fun loadMainHtml(): String {
-        return assets.open("main.html").bufferedReader(Charsets.UTF_8).use { it.readText() }
+        val html = assets.open("main.html").bufferedReader(Charsets.UTF_8).use { it.readText() }
+        return html.replace("__APP_LANG__", resolveWebLanguageTag())
+    }
+
+    private fun resolveWebLanguageTag(): String {
+        val locale: Locale = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+            resources.configuration.locales[0]
+        } else {
+            @Suppress("DEPRECATION")
+            resources.configuration.locale
+        }
+        return locale.toLanguageTag()
     }
 
     private fun promoteToForeground(contentText: String) {

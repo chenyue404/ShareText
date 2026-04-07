@@ -26,6 +26,13 @@
     <string name="desc_fill_clipboard">填充剪贴板</string>
     <string name="desc_send">发送</string>
     <string name="settings_title">设置</string>
+    <string name="settings_language_title">语言</string>
+    <string name="settings_language_current">当前：%1$s</string>
+    <string name="settings_language_system">跟随系统</string>
+    <string name="settings_language_english">英文</string>
+    <string name="settings_language_chinese_simplified">简体中文</string>
+    <string name="settings_language_apply">应用语言</string>
+    <string name="settings_language_applied">语言已应用</string>
     <string name="settings_service_title">服务设置</string>
     <string name="settings_current_port">当前端口：%1$d</string>
     <string name="settings_port_range">可用范围：1 - 65535</string>

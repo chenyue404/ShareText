@@ -1,9 +1,9 @@
 ﻿<!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="__APP_LANG__">
 <head>
     <meta charset="UTF-8"/>
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-    <title>ShareText 局域网文本板</title>
+    <title>ShareText</title>
     <style>
         :root {
             --bg: #eef2f7;
@@ -226,33 +226,90 @@
 <div id="app">
     <section class="panel header">
         <div>
-            <div class="title">ShareText 局域网文本板</div>
-            <div class="sub" id="addr">地址：--</div>
+            <div class="title" id="pageTitle">ShareText</div>
+            <div class="sub" id="addr">--</div>
         </div>
-        <div class="badge" id="netState">同步正常</div>
+        <div class="badge" id="netState">--</div>
     </section>
 
     <section class="panel listWrap" id="listWrap">
-        <div class="empty">还没有文本内容，发送后会显示在这里。</div>
+        <div class="empty" id="emptyHint">--</div>
     </section>
 
     <section class="undoBar" id="undoBar">
-        <span id="undoText">已删除</span>
-        <button class="miniBtn" id="undoBtn">撤销</button>
+        <span id="undoText">--</span>
+        <button class="miniBtn" id="undoBtn">--</button>
     </section>
 
     <section class="panel composer">
-        <textarea id="input" placeholder="输入文本，Ctrl+Enter 快速发送"></textarea>
-        <button id="send">发送</button>
+        <textarea id="input" placeholder=""></textarea>
+        <button id="send">--</button>
     </section>
 </div>
 
 <script>
+    const APP_LANG_RAW = "__APP_LANG__";
+    const APP_LANG = APP_LANG_RAW.toLowerCase().startsWith("zh") ? "zh" : "en";
+    const I18N = {
+        zh: {
+            pageTitle: "ShareText 局域网文本板",
+            addressLabel: "地址",
+            syncOk: "同步正常",
+            syncError: "同步异常",
+            syncErrorWithReason: "同步异常：{0}",
+            connectFail: "连接失败",
+            copyFail: "复制失败",
+            sendFail: "发送失败",
+            undoFail: "撤销失败",
+            emptyHint: "还没有文本内容，发送后会显示在这里。",
+            undoDeleted: "已删除",
+            undoDeletedWithText: "已删除：{0}",
+            undoAction: "撤销",
+            inputPlaceholder: "输入文本，Ctrl+Enter 快速发送",
+            send: "发送",
+            copy: "复制",
+            delete: "删除"
+        },
+        en: {
+            pageTitle: "ShareText LAN Text Board",
+            addressLabel: "Address",
+            syncOk: "Sync OK",
+            syncError: "Sync Error",
+            syncErrorWithReason: "Sync Error: {0}",
+            connectFail: "Connection failed",
+            copyFail: "Copy failed",
+            sendFail: "Send failed",
+            undoFail: "Undo failed",
+            emptyHint: "No text yet. It will appear here after sending.",
+            undoDeleted: "Deleted",
+            undoDeletedWithText: "Deleted: {0}",
+            undoAction: "Undo",
+            inputPlaceholder: "Enter text, Ctrl+Enter to send",
+            send: "Send",
+            copy: "Copy",
+            delete: "Delete"
+        }
+    };
+
+    function t(key) {
+        return (I18N[APP_LANG] && I18N[APP_LANG][key]) || I18N.en[key] || key;
+    }
+
+    function tf(key, ...args) {
+        let text = t(key);
+        args.forEach((arg, idx) => {
+            text = text.replace(`{${idx}}`, String(arg));
+        });
+        return text;
+    }
+
     const baseUrl = window.location.origin;
     const listWrap = document.getElementById("listWrap");
     const inputEl = document.getElementById("input");
     const sendBtn = document.getElementById("send");
     const addrEl = document.getElementById("addr");
+    const pageTitleEl = document.getElementById("pageTitle");
+    const emptyHintEl = document.getElementById("emptyHint");
     const netStateEl = document.getElementById("netState");
     const undoBarEl = document.getElementById("undoBar");
     const undoTextEl = document.getElementById("undoText");
@@ -263,14 +320,22 @@
     let undoTimer = null;
     let isFetchingList = false;
 
-    addrEl.textContent = `地址：${baseUrl}`;
+    document.documentElement.lang = APP_LANG === "zh" ? "zh-CN" : "en";
+    document.title = t("pageTitle");
+    pageTitleEl.textContent = t("pageTitle");
+    addrEl.textContent = `${t("addressLabel")}: ${baseUrl}`;
+    emptyHintEl.textContent = t("emptyHint");
+    undoTextEl.textContent = t("undoDeleted");
+    undoBtn.textContent = t("undoAction");
+    inputEl.placeholder = t("inputPlaceholder");
+    sendBtn.textContent = t("send");
 
     function setNetState(ok, reason = "") {
         if (ok) {
-            netStateEl.textContent = "同步正常";
+            netStateEl.textContent = t("syncOk");
             netStateEl.className = "badge";
         } else {
-            netStateEl.textContent = reason ? `同步异常：${reason}` : "同步异常";
+            netStateEl.textContent = reason ? tf("syncErrorWithReason", reason) : t("syncError");
             netStateEl.className = "badge error";
         }
     }
@@ -287,7 +352,7 @@
         if (safe.length === 0) {
             const empty = document.createElement("div");
             empty.className = "empty";
-            empty.textContent = "还没有文本内容，发送后会显示在这里。";
+            empty.textContent = t("emptyHint");
             listWrap.appendChild(empty);
             return;
         }
@@ -310,14 +375,14 @@
 
             const copyBtn = document.createElement("button");
             copyBtn.className = "miniBtn";
-            copyBtn.textContent = "复制";
+            copyBtn.textContent = t("copy");
             copyBtn.addEventListener("click", async () => {
                 await copyText(item.text);
             });
 
             const delBtn = document.createElement("button");
             delBtn.className = "miniBtn";
-            delBtn.textContent = "删除";
+            delBtn.textContent = t("delete");
             delBtn.addEventListener("click", async () => {
                 await removeById(item.id);
                 showUndo(item.text);
@@ -384,7 +449,7 @@
             setNetState(true);
             render(data || []);
         } catch (err) {
-            setNetState(false, "连接失败");
+            setNetState(false, t("connectFail"));
         } finally {
             isFetchingList = false;
             if (reschedule) {
@@ -445,7 +510,7 @@
             }
             setNetState(true);
         } catch (_) {
-            setNetState(false, "复制失败");
+            setNetState(false, t("copyFail"));
         }
     }
 
@@ -458,7 +523,7 @@
             inputEl.value = "";
             await fetchList({ reschedule: false });
         } catch (_) {
-            setNetState(false, "发送失败");
+            setNetState(false, t("sendFail"));
         } finally {
             sendBtn.disabled = false;
         }
@@ -471,7 +536,7 @@
             hideUndo();
             await fetchList({ reschedule: false });
         } catch (_) {
-            setNetState(false, "撤销失败");
+            setNetState(false, t("undoFail"));
         }
     });
 
@@ -489,7 +554,7 @@
 
     function showUndo(text) {
         if (undoTimer) clearTimeout(undoTimer);
-        undoTextEl.textContent = `已删除：${String(text || "").slice(0, 24)}`;
+        undoTextEl.textContent = tf("undoDeletedWithText", String(text || "").slice(0, 24));
         undoBarEl.classList.add("show");
         undoTimer = setTimeout(hideUndo, 5000);
     }

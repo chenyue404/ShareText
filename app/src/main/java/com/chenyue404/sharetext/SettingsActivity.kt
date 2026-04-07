@@ -36,6 +36,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.core.app.ActivityCompat
 
 class SettingsActivity : ComponentActivity() {
 
@@ -49,6 +50,7 @@ class SettingsActivity : ComponentActivity() {
             MaterialTheme {
                 SettingsScreen(
                     initialPort = oldPort,
+                    initialLanguage = AppLanguageManager.currentOption(this),
                     onSave = { port ->
                         when {
                             port !in 1..65535 -> SaveResult.Invalid
@@ -61,6 +63,11 @@ class SettingsActivity : ComponentActivity() {
                                 SaveResult.Success
                             }
                         }
+                    },
+                    onApplyLanguage = { option ->
+                        AppLanguageManager.apply(this, option)
+                        WebService.requestRestart(this)
+                        ActivityCompat.recreate(this)
                     },
                     onDone = { finish() },
                     onBack = { finish() }
@@ -80,12 +87,15 @@ private enum class SaveResult {
 @OptIn(ExperimentalMaterial3Api::class)
 private fun SettingsScreen(
     initialPort: Int,
+    initialLanguage: AppLanguageOption,
     onSave: (Int) -> SaveResult,
+    onApplyLanguage: (AppLanguageOption) -> Unit,
     onDone: () -> Unit,
     onBack: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     var portText by rememberSaveable { mutableStateOf(initialPort.toString()) }
+    var selectedLanguage by rememberSaveable { mutableStateOf(initialLanguage) }
     val context = LocalContext.current
     val typedPort = portText.toIntOrNull()
     val suggestedPort =
@@ -122,6 +132,67 @@ private fun SettingsScreen(
                 .padding(UiStyle.ScreenPadding),
             verticalArrangement = Arrangement.spacedBy(UiStyle.InnerSpacing)
         ) {
+            Card(
+                colors = CardDefaults.cardColors(containerColor = UiStyle.ListCardBackground),
+                shape = RoundedCornerShape(UiStyle.CornerRadius),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Column(
+                    modifier = Modifier.padding(UiStyle.CardPadding),
+                    verticalArrangement = Arrangement.spacedBy(UiStyle.InnerSpacing)
+                ) {
+                    val currentLanguageText = when (selectedLanguage) {
+                        AppLanguageOption.SYSTEM -> stringResource(R.string.settings_language_system)
+                        AppLanguageOption.ENGLISH -> stringResource(R.string.settings_language_english)
+                        AppLanguageOption.SIMPLIFIED_CHINESE -> stringResource(R.string.settings_language_chinese_simplified)
+                    }
+                    Text(
+                        text = stringResource(R.string.settings_language_title),
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                    Text(
+                        text = stringResource(
+                            R.string.settings_language_current,
+                            currentLanguageText
+                        ),
+                        color = UiStyle.SecondaryText,
+                        style = MaterialTheme.typography.bodySmall
+                    )
+                    OutlinedButton(
+                        modifier = Modifier.fillMaxWidth(),
+                        onClick = { selectedLanguage = AppLanguageOption.SYSTEM }
+                    ) {
+                        Text(stringResource(R.string.settings_language_system))
+                    }
+                    OutlinedButton(
+                        modifier = Modifier.fillMaxWidth(),
+                        onClick = { selectedLanguage = AppLanguageOption.ENGLISH }
+                    ) {
+                        Text(stringResource(R.string.settings_language_english))
+                    }
+                    OutlinedButton(
+                        modifier = Modifier.fillMaxWidth(),
+                        onClick = { selectedLanguage = AppLanguageOption.SIMPLIFIED_CHINESE }
+                    ) {
+                        Text(stringResource(R.string.settings_language_chinese_simplified))
+                    }
+                    Button(
+                        modifier = Modifier.fillMaxWidth(),
+                        onClick = {
+                            onApplyLanguage(selectedLanguage)
+                            Toast.makeText(
+                                context,
+                                context.getString(R.string.settings_language_applied),
+                                Toast.LENGTH_SHORT
+                            ).show()
+                        }
+                    ) {
+                        Text(stringResource(R.string.settings_language_apply))
+                    }
+                }
+            }
+
             Card(
                 colors = CardDefaults.cardColors(containerColor = UiStyle.StatusCardBackground),
                 shape = RoundedCornerShape(UiStyle.CornerRadius),

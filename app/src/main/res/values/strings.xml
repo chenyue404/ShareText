@@ -26,6 +26,13 @@
     <string name="desc_fill_clipboard">Fill from clipboard</string>
     <string name="desc_send">Send</string>
     <string name="settings_title">Settings</string>
+    <string name="settings_language_title">Language</string>
+    <string name="settings_language_current">Current: %1$s</string>
+    <string name="settings_language_system">Follow system</string>
+    <string name="settings_language_english">English</string>
+    <string name="settings_language_chinese_simplified">Simplified Chinese</string>
+    <string name="settings_language_apply">Apply language</string>
+    <string name="settings_language_applied">Language applied</string>
     <string name="settings_service_title">Service settings</string>
     <string name="settings_current_port">Current port: %1$d</string>
     <string name="settings_port_range">Valid range: 1 - 65535</string>
